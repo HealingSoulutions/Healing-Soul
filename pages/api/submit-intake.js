@@ -213,6 +213,36 @@ async function sendNotificationEmail(data) {
    ═══════════════════════════════════════ */
 
 export default async function handler(req, res) {
+  /* ── GET = Test email (visit /api/submit-intake in browser to test) ── */
+  if (req.method === 'GET') {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'RESEND_API_KEY is NOT set in environment variables', found: false });
+    }
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Healing Soulutions <bookings@healingsoulutions.care>',
+          to: ['info@healingsoulutions.care'],
+          subject: 'Test Email - Healing Soulutions',
+          html: '<h1>This is a test!</h1><p>If you see this email, Resend is working correctly and your intake notifications will work.</p>',
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        return res.status(400).json({ error: 'Resend returned an error', status: response.status, details: result });
+      }
+      return res.status(200).json({ success: true, message: 'Test email sent to info@healingsoulutions.care!', emailId: result.id });
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to reach Resend', message: err.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
