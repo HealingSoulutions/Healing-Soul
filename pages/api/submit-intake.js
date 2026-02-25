@@ -2,10 +2,6 @@ const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
 
 async function intakeqRequest(endpoint, method, body) {
   const apiKey = process.env.INTAKEQ_API_KEY;
-  if (!apiKey) {const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
-
-async function intakeqRequest(endpoint, method, body) {
-  const apiKey = process.env.INTAKEQ_API_KEY;
   if (!apiKey) {
     throw new Error('IntakeQ API key is not configured.');
   }
@@ -216,7 +212,7 @@ async function sendNotificationEmail(data) {
    MAIN HANDLER
    ═══════════════════════════════════════ */
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   /* ── GET = Test email (visit /api/submit-intake in browser to test) ── */
   if (req.method === 'GET') {
     const apiKey = process.env.RESEND_API_KEY;
