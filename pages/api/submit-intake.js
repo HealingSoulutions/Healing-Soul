@@ -2,6 +2,10 @@ const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
 
 async function intakeqRequest(endpoint, method, body) {
   const apiKey = process.env.INTAKEQ_API_KEY;
+  if (!apiKey) {const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
+
+async function intakeqRequest(endpoint, method, body) {
+  const apiKey = process.env.INTAKEQ_API_KEY;
   if (!apiKey) {
     throw new Error('IntakeQ API key is not configured.');
   }
@@ -219,11 +223,19 @@ export default async function handler(req, res) {
     if (!apiKey) {
       return res.status(500).json({ error: 'RESEND_API_KEY is NOT set in environment variables', found: false });
     }
+
+    // Debug: show key info (safe — only shows first 7 chars like "re_abc..")
+    const keyPreview = apiKey.substring(0, 7) + '...' + apiKey.substring(apiKey.length - 4);
+    const keyLength = apiKey.length;
+    const startsCorrectly = apiKey.startsWith('re_');
+    const hasSpaces = apiKey !== apiKey.trim();
+    const hasQuotes = apiKey.includes('"') || apiKey.includes("'");
+
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + apiKey,
+          'Authorization': 'Bearer ' + apiKey.trim(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -235,11 +247,16 @@ export default async function handler(req, res) {
       });
       const result = await response.json();
       if (!response.ok) {
-        return res.status(400).json({ error: 'Resend returned an error', status: response.status, details: result });
+        return res.status(400).json({
+          error: 'Resend returned an error',
+          status: response.status,
+          details: result,
+          debug: { keyPreview, keyLength, startsCorrectly, hasSpaces, hasQuotes },
+        });
       }
       return res.status(200).json({ success: true, message: 'Test email sent to info@healingsoulutions.care!', emailId: result.id });
     } catch (err) {
-      return res.status(500).json({ error: 'Failed to reach Resend', message: err.message });
+      return res.status(500).json({ error: 'Failed to reach Resend', message: err.message, debug: { keyPreview, keyLength, startsCorrectly, hasSpaces, hasQuotes } });
     }
   }
 
