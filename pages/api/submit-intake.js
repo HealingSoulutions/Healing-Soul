@@ -71,7 +71,23 @@ function buildPatientNotes(data) {
   }
   return sections.join('\n');
 }
+async function sendBusinessEmail(data) {
+  var resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) { return; }
+  var patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'New Patient';
+  var c = data.consents || {};
+  var ck = function(val) { return val ? 'YES' : 'NO'; };
+  var html = '<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:#2E5A46;padding:20px;text-align:center;"><h1 style="color:#D4BC82;margin:0;">New Patient Intake</h1></div><div style="padding:20px;"><p><b>Name:</b> ' + patientName + '</p><p><b>Email:</b> ' + (data.email || 'N/A') + '</p><p><b>Phone:</b> ' + (data.phone || 'N/A') + '</p><p><b>Date:</b> ' + (data.date || 'TBD') + '</p><p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p><p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General') + '</p><p><b>Consents:</b> Treatment:' + ck(c.treatment) + ' HIPAA:' + ck(c.hipaa) + ' Medical:' + ck(c.medical) + ' Financial:' + ck(c.financial) + '</p><p><b>Signature:</b> ' + (data.signature || 'N/A') + '</p></div></div>';
+  try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: ['info@healingsoulutions.care'], subject: 'New Intake: ' + patientName, html: html }) }); } catch (e) { console.error('Email error:', e); }
+}
 
+async function sendPatientEmail(data) {
+  var resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey || !data.email) { return; }
+  var patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'Valued Patient';
+  var html = '<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:#2E5A46;padding:20px;text-align:center;"><h1 style="color:#D4BC82;margin:0;">Booking Confirmed</h1></div><div style="padding:20px;"><p>Dear ' + patientName + ',</p><p>Thank you for booking with Healing Soulutions. Our team will contact you within 24 hours.</p><p><b>Date:</b> ' + (data.date || 'TBD') + '</p><p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p><p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General') + '</p><p>Questions? Email info@healingsoulutions.care or call (585) 747-2215</p><p style="color:#999;font-size:12px;">24-hour cancellation policy applies.</p></div></div>';
+  try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: [data.email], subject: 'Booking Confirmed - Healing Soulutions', html: html, reply_to: 'info@healingsoulutions.care' }) }); } catch (e) { console.error('Patient email error:', e); }
+}
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -178,8 +194,8 @@ export default async function handler(req, res) {
     } catch (intakeError) {
       console.error('IntakeQ intake submission error:', intakeError);
     }
-
-    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
+try { await sendBusinessEmail(data); } catch (e) {}
+    try { await sendPatientEmail(data); } catch (e) {}    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
 
     return res.status(200).json({
       success: true,
