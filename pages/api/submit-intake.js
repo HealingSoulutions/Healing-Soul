@@ -1,4 +1,5 @@
 const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
+const BUSINESS_EMAIL = 'info@healingsoulutions.care';
 
 async function intakeqRequest(endpoint, method, body) {
   const apiKey = process.env.INTAKEQ_API_KEY;
@@ -71,23 +72,153 @@ function buildPatientNotes(data) {
   }
   return sections.join('\n');
 }
+
 async function sendBusinessEmail(data) {
-  var resendApiKey = process.env.RESEND_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey) { return; }
-  var patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'New Patient';
-  var c = data.consents || {};
-  var ck = function(val) { return val ? 'YES' : 'NO'; };
-  var html = '<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:#2E5A46;padding:20px;text-align:center;"><h1 style="color:#D4BC82;margin:0;">New Patient Intake</h1></div><div style="padding:20px;"><p><b>Name:</b> ' + patientName + '</p><p><b>Email:</b> ' + (data.email || 'N/A') + '</p><p><b>Phone:</b> ' + (data.phone || 'N/A') + '</p><p><b>Date:</b> ' + (data.date || 'TBD') + '</p><p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p><p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General') + '</p><p><b>Consents:</b> Treatment:' + ck(c.treatment) + ' HIPAA:' + ck(c.hipaa) + ' Medical:' + ck(c.medical) + ' Financial:' + ck(c.financial) + '</p><p><b>Signature:</b> ' + (data.signature || 'N/A') + '</p></div></div>';
-  try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: ['info@healingsoulutions.care'], subject: 'New Intake: ' + patientName, html: html }) }); } catch (e) { console.error('Email error:', e); }
+  const patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'New Patient';
+  const c = data.consents || {};
+  const ck = function(val) { return val ? 'YES' : 'NO'; };
+
+  let addPatientsHtml = '';
+  if (data.additionalPatients && data.additionalPatients.length > 0) {
+    addPatientsHtml = '<h3 style="color:#2E5A46;margin-top:20px;">Additional Patients (' + data.additionalPatients.length + ')</h3>';
+    data.additionalPatients.forEach(function(pt, idx) {
+      const ptName = ((pt.fname || '') + ' ' + (pt.lname || '')).trim() || 'Patient ' + (idx + 2);
+      const ptSvc = pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary';
+      addPatientsHtml += '<div style="background:#f0f7f3;border-radius:8px;padding:12px;margin:8px 0;">'
+        + '<b style="color:#2E5A46;">Patient ' + (idx + 2) + ': ' + ptName + '</b><br/>'
+        + 'Services: ' + ptSvc + '<br/>'
+        + 'Medical History: ' + (pt.medicalHistory || 'None') + '<br/>'
+        + 'Surgical History: ' + (pt.surgicalHistory || 'None') + '<br/>'
+        + 'Medications: ' + (pt.medications || 'None') + '<br/>'
+        + 'Allergies: ' + (pt.allergies || 'None') + '<br/>'
+        + (pt.clinicianNotes ? 'Clinician Notes: ' + pt.clinicianNotes + '<br/>' : '')
+        + '</div>';
+    });
+  }
+
+  const html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">'
+    + '<div style="background:#2E5A46;padding:20px;text-align:center;">'
+    + '<h1 style="color:#D4BC82;margin:0;font-size:22px;">New Patient Intake</h1>'
+    + '<p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px;">Healing Soulutions</p></div>'
+    + '<div style="padding:20px;">'
+    + '<h3 style="color:#2E5A46;">Patient Information</h3>'
+    + '<p><b>Name:</b> ' + patientName + '</p>'
+    + '<p><b>Email:</b> ' + (data.email || 'N/A') + '</p>'
+    + '<p><b>Phone:</b> ' + (data.phone || 'N/A') + '</p>'
+    + '<p><b>Address:</b> ' + (data.address || 'N/A') + '</p>'
+    + '<h3 style="color:#2E5A46;margin-top:20px;">Appointment</h3>'
+    + '<p><b>Date:</b> ' + (data.date || 'TBD') + '</p>'
+    + '<p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p>'
+    + '<p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General Consultation') + '</p>'
+    + (data.notes ? '<p><b>Notes:</b> ' + data.notes + '</p>' : '')
+    + '<h3 style="color:#2E5A46;margin-top:20px;">Medical Information</h3>'
+    + '<p><b>Medical History:</b> ' + (data.medicalHistory || 'None') + '</p>'
+    + '<p><b>Surgical History:</b> ' + (data.surgicalHistory || 'None') + '</p>'
+    + '<p><b>Medications:</b> ' + (data.medications || 'None') + '</p>'
+    + '<p><b>Allergies:</b> ' + (data.allergies || 'None') + '</p>'
+    + (data.clinicianNotes ? '<p><b>Clinician Notes:</b> ' + data.clinicianNotes + '</p>' : '')
+    + '<h3 style="color:#2E5A46;margin-top:20px;">Consents</h3>'
+    + '<p>Treatment: ' + ck(c.treatment) + ' | HIPAA: ' + ck(c.hipaa) + ' | Medical: ' + ck(c.medical) + ' | Financial: ' + ck(c.financial) + '</p>'
+    + '<p><b>E-Signature:</b> ' + (data.signature || 'Not provided') + '</p>'
+    + '<p><b>Intake Acknowledged:</b> ' + (data.intakeAcknowledged ? 'Yes' : 'No') + '</p>'
+    + '<h3 style="color:#2E5A46;margin-top:20px;">Payment</h3>'
+    + '<p><b>Card:</b> ' + (data.cardBrand || 'N/A') + ' ****' + (data.cardLast4 || 'N/A') + ' (' + (data.cardHolderName || 'N/A') + ')</p>'
+    + addPatientsHtml
+    + '<div style="margin-top:20px;padding:12px;background:#FFF8E7;border:1px solid #D4BC82;border-radius:8px;text-align:center;">'
+    + '<p style="margin:0;font-size:13px;color:#2E5A46;"><b>Full record saved to IntakeQ (HIPAA-secure)</b></p></div>'
+    + '</div></div>';
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Healing Soulutions <bookings@healingsoulutions.care>',
+        to: [BUSINESS_EMAIL],
+        subject: 'New Intake: ' + patientName + ' - ' + (data.date || 'Date TBD'),
+        html: html,
+        reply_to: data.email || undefined,
+      }),
+    });
+  } catch (e) { console.error('Business email error:', e); }
 }
 
-async function sendPatientEmail(data) {
-  var resendApiKey = process.env.RESEND_API_KEY;
+async function sendPatientConfirmationEmail(data) {
+  const resendApiKey = process.env.RESEND_API_KEY;
   if (!resendApiKey || !data.email) { return; }
-  var patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'Valued Patient';
-  var html = '<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:#2E5A46;padding:20px;text-align:center;"><h1 style="color:#D4BC82;margin:0;">Booking Confirmed</h1></div><div style="padding:20px;"><p>Dear ' + patientName + ',</p><p>Thank you for booking with Healing Soulutions. Our team will contact you within 24 hours.</p><p><b>Date:</b> ' + (data.date || 'TBD') + '</p><p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p><p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General') + '</p><p>Questions? Email info@healingsoulutions.care or call (585) 747-2215</p><p style="color:#999;font-size:12px;">24-hour cancellation policy applies.</p></div></div>';
-  try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: [data.email], subject: 'Booking Confirmed - Healing Soulutions', html: html, reply_to: 'info@healingsoulutions.care' }) }); } catch (e) { console.error('Patient email error:', e); }
+  const patientName = ((data.fname || '') + ' ' + (data.lname || '')).trim() || 'Valued Patient';
+  const serviceList = data.services && data.services.length > 0 ? data.services.join(', ') : 'General Consultation';
+  const c = data.consents || {};
+
+  let addPatientsHtml = '';
+  if (data.additionalPatients && data.additionalPatients.length > 0) {
+    addPatientsHtml = '<div style="margin-top:16px;padding:12px;background:#f0f7f3;border-radius:8px;">'
+      + '<p style="margin:0 0 8px;font-weight:600;color:#2E5A46;">Additional Patients:</p>';
+    data.additionalPatients.forEach(function(pt, idx) {
+      const ptName = ((pt.fname || '') + ' ' + (pt.lname || '')).trim() || 'Patient ' + (idx + 2);
+      const ptSvc = pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary';
+      addPatientsHtml += '<p style="margin:4px 0;font-size:14px;">' + ptName + ' - ' + ptSvc + '</p>';
+    });
+    addPatientsHtml += '</div>';
+  }
+
+  const html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">'
+    + '<div style="background:#2E5A46;padding:24px;text-align:center;">'
+    + '<h1 style="color:#D4BC82;margin:0;font-size:24px;">Booking Confirmed</h1>'
+    + '<p style="color:rgba(255,255,255,0.8);margin:6px 0 0;font-size:14px;">Healing Soulutions</p></div>'
+    + '<div style="padding:24px;">'
+    + '<p style="font-size:16px;color:#333;">Dear ' + patientName + ',</p>'
+    + '<p style="font-size:14px;color:#555;line-height:1.6;">Thank you for booking with Healing Soulutions. Your appointment request has been received. Our team will contact you within 24 hours to confirm.</p>'
+    + '<div style="background:#f9f9f9;border-radius:8px;padding:16px;margin:20px 0;border-left:4px solid #2E5A46;">'
+    + '<h3 style="margin:0 0 12px;color:#2E5A46;font-size:16px;">Your Appointment Details</h3>'
+    + '<p style="margin:4px 0;font-size:14px;"><b>Date:</b> ' + (data.date || 'To be confirmed') + '</p>'
+    + '<p style="margin:4px 0;font-size:14px;"><b>Time:</b> ' + (data.selTime || 'To be confirmed') + '</p>'
+    + '<p style="margin:4px 0;font-size:14px;"><b>Services:</b> ' + serviceList + '</p>'
+    + (data.address ? '<p style="margin:4px 0;font-size:14px;"><b>Location:</b> ' + data.address + '</p>' : '')
+    + addPatientsHtml
+    + '</div>'
+    + '<h3 style="color:#2E5A46;margin-top:20px;font-size:15px;">Medical Information on File</h3>'
+    + '<p style="font-size:13px;color:#555;"><b>Medical History:</b> ' + (data.medicalHistory || 'None provided') + '</p>'
+    + '<p style="font-size:13px;color:#555;"><b>Surgical History:</b> ' + (data.surgicalHistory || 'None provided') + '</p>'
+    + '<p style="font-size:13px;color:#555;"><b>Medications:</b> ' + (data.medications || 'None provided') + '</p>'
+    + '<p style="font-size:13px;color:#555;"><b>Allergies:</b> ' + (data.allergies || 'None provided') + '</p>'
+    + (data.clinicianNotes ? '<p style="font-size:13px;color:#555;"><b>Notes for Clinician:</b> ' + data.clinicianNotes + '</p>' : '')
+    + '<div style="background:#FFF8E7;border-radius:8px;padding:14px;margin:16px 0;border:1px solid #D4BC82;">'
+    + '<p style="margin:0 0 8px;font-size:13px;color:#555;font-weight:600;">Consents Completed:</p>'
+    + (c.treatment ? '<p style="margin:2px 0;font-size:13px;color:#555;">&#10003; Treatment Consent</p>' : '')
+    + (c.hipaa ? '<p style="margin:2px 0;font-size:13px;color:#555;">&#10003; HIPAA Privacy Notice</p>' : '')
+    + (c.medical ? '<p style="margin:2px 0;font-size:13px;color:#555;">&#10003; Medical History Release</p>' : '')
+    + (c.financial ? '<p style="margin:2px 0;font-size:13px;color:#555;">&#10003; Financial Agreement</p>' : '')
+    + '<p style="margin:8px 0 0;font-size:12px;color:#888;">Signed electronically by: ' + (data.signature || 'N/A') + '</p>'
+    + '</div>'
+    + '<p style="margin:4px 0;font-size:14px;"><b>Card on file:</b> ' + (data.cardBrand || '') + ' ****' + (data.cardLast4 || 'N/A') + '</p>'
+    + '<hr style="border:none;border-top:1px solid #eee;margin:20px 0;"/>'
+    + '<p style="font-size:14px;color:#555;">If you need to reschedule or have questions:</p>'
+    + '<p style="font-size:14px;"><b>Email:</b> ' + BUSINESS_EMAIL + '</p>'
+    + '<p style="font-size:14px;"><b>Phone:</b> (585) 747-2215</p>'
+    + '<p style="font-size:13px;color:#999;margin-top:20px;">Please remember our 24-hour cancellation policy. Cancellations made less than 24 hours before your appointment may be subject to a fee.</p>'
+    + '</div>'
+    + '<div style="background:#f5f5f5;padding:12px;text-align:center;font-size:11px;color:#999;">'
+    + 'Healing Soulutions | Concierge Nursing Care | New York Metropolitan Area</div>'
+    + '</div>';
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + resendApiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Healing Soulutions <bookings@healingsoulutions.care>',
+        to: [data.email],
+        subject: 'Booking Confirmed - Healing Soulutions | ' + (data.date || ''),
+        html: html,
+        reply_to: BUSINESS_EMAIL,
+      }),
+    });
+  } catch (e) { console.error('Patient email error:', e); }
 }
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -194,8 +325,11 @@ export default async function handler(req, res) {
     } catch (intakeError) {
       console.error('IntakeQ intake submission error:', intakeError);
     }
-try { await sendBusinessEmail(data); } catch (e) {}
-    try { await sendPatientEmail(data); } catch (e) {}    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
+
+    try { await sendBusinessEmail(data); } catch (e) { console.error('Business email failed:', e); }
+    try { await sendPatientConfirmationEmail(data); } catch (e) { console.error('Patient email failed:', e); }
+
+    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
 
     return res.status(200).json({
       success: true,
