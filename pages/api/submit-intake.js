@@ -71,9 +71,8 @@ function buildPatientNotes(data) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+if (req.method === 'GET') { return res.status(200).json({ debug: global._lastIntakeResult || 'no bookings yet' }); }
+  if (req.method !== 'POST') { return res.status(405).json({ error: 'Method not allowed' }); }
 
   try {
     var data = req.body;
@@ -186,7 +185,7 @@ export default async function handler(req, res) {
       await intakeqRequest('/intakes', 'POST', intakePayload);
       console.log('IntakeQ intake submitted with all consents');
     } catch (intakeError) {
-      console.error('IntakeQ intake submission error:', intakeError);
+      console.error('IntakeQ intake submission error:', intakeError); global._lastIntakeResult = { time: new Date().toISOString(), error: intakeError.message };
     }
 
     /* -- 3. BUSINESS EMAIL -- */
@@ -194,7 +193,7 @@ export default async function handler(req, res) {
 
     /* -- 4. PATIENT CONFIRMATION EMAIL -- */
     if (RESEND_KEY && data.email) { try { var pe = '<div style="font-family:Arial;max-width:600px;margin:0 auto"><div style="background:#2E5A46;padding:20px;text-align:center"><h1 style="color:#D4BC82;margin:0">Booking Confirmed</h1><p style="color:rgba(255,255,255,0.7);margin:4px 0 0;font-size:13px">Healing Soulutions</p></div><div style="padding:20px"><p style="font-size:16px">Dear ' + data.fname + ',</p><p style="color:#555">Thank you for booking with Healing Soulutions. Our team will contact you within 24 hours to confirm.</p><div style="background:#f9f9f9;border-left:4px solid #2E5A46;padding:16px;margin:16px 0;border-radius:8px"><h3 style="color:#2E5A46;margin:0 0 10px">Appointment Details</h3><p><b>Date:</b> ' + (data.date || 'TBD') + '</p><p><b>Time:</b> ' + (data.selTime || 'TBD') + '</p><p><b>Services:</b> ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General Consultation') + '</p></div><div style="background:#f9f9f9;padding:16px;margin:16px 0;border-radius:8px"><h3 style="color:#2E5A46;margin:0 0 10px">Your Medical Info</h3><p><b>Medical History:</b> ' + (data.medicalHistory || 'None') + '</p><p><b>Medications:</b> ' + (data.medications || 'None') + '</p><p><b>Allergies:</b> ' + (data.allergies || 'None') + '</p></div><div style="background:#FFF8E7;border:1px solid #D4BC82;padding:14px;margin:16px 0;border-radius:8px"><p style="margin:0;color:#555">&#10003; All consents signed</p></div><hr style="border:none;border-top:1px solid #eee;margin:20px 0"><p style="color:#555">Questions? Email info@healingsoulutions.care or call (585) 747-2215</p></div><div style="background:#2E5A46;padding:10px;text-align:center;font-size:11px;color:rgba(255,255,255,0.5)">Healing Soulutions | Concierge Nursing Care</div></div>'; await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RESEND_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: [data.email], subject: 'Booking Confirmed - Healing Soulutions', html: pe, reply_to: 'info@healingsoulutions.care' }) }); } catch(e) {} }
-
+    global._lastIntakeResult = { time: new Date().toISOString(), clientId: clientId, intakeError: null };    
     console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
 
     return res.status(200).json({
