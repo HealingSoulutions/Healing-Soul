@@ -100,7 +100,7 @@ if (req.method === 'GET') { return res.status(200).json({ debug: global._lastInt
         Address: data.address || '',
         DateOfBirth: null,
         Tags: ['Website Booking', 'Online Intake'],
-        Notes: buildPatientNotes(data),
+        AdditionalInformation: buildPatientNotes(data),
       };
 
       if (Array.isArray(existingClients) && existingClients.length > 0) {
