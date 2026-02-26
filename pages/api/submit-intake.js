@@ -1,3 +1,4 @@
+const RESEND_KEY = process.env.RESEND_API_KEY;
 const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
 
 async function intakeqRequest(endpoint, method, body) {
@@ -178,8 +179,8 @@ export default async function handler(req, res) {
     } catch (intakeError) {
       console.error('IntakeQ intake submission error:', intakeError);
     }
-
-    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
+if (RESEND_KEY) { try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RESEND_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: ['info@healingsoulutions.care'], subject: 'New Intake: ' + data.fname + ' ' + data.lname, html: '<h2>New Booking</h2><p>Name: ' + data.fname + ' ' + data.lname + '</p><p>Email: ' + data.email + '</p><p>Phone: ' + (data.phone || 'N/A') + '</p><p>Date: ' + (data.date || 'TBD') + '</p><p>Time: ' + (data.selTime || 'TBD') + '</p><p>Services: ' + (data.services ? data.services.join(', ') : 'General') + '</p><p>Medical History: ' + (data.medicalHistory || 'None') + '</p><p>Surgical History: ' + (data.surgicalHistory || 'None') + '</p><p>Medications: ' + (data.medications || 'None') + '</p><p>Allergies: ' + (data.allergies || 'None') + '</p><p>Signature: ' + (data.signature || 'N/A') + '</p>' }) }); } catch(e) {} }
+    if (RESEND_KEY && data.email) { try { await fetch('https://api.resend.com/emails', { method: 'POST', headers: { 'Authorization': 'Bearer ' + RESEND_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify({ from: 'Healing Soulutions <bookings@healingsoulutions.care>', to: [data.email], subject: 'Booking Confirmed - Healing Soulutions', html: '<h2>Booking Confirmed</h2><p>Dear ' + data.fname + ',</p><p>Thank you for booking. We will contact you within 24 hours.</p><p>Date: ' + (data.date || 'TBD') + '</p><p>Time: ' + (data.selTime || 'TBD') + '</p><p>Services: ' + (data.services ? data.services.join(', ') : 'General') + '</p><p>Medical History: ' + (data.medicalHistory || 'None') + '</p><p>Medications: ' + (data.medications || 'None') + '</p><p>Allergies: ' + (data.allergies || 'None') + '</p><p>Consents: All signed</p><p>Questions? Email info@healingsoulutions.care or call (585) 747-2215</p>', reply_to: 'info@healingsoulutions.care' }) }); } catch(e) {} }    console.log('[Booking] ' + data.fname + ' ' + data.lname + ' (' + data.email + ') - Services: ' + (data.services ? data.services.join(', ') : 'General'));
 
     return res.status(200).json({
       success: true,
