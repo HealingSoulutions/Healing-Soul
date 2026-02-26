@@ -2,7 +2,7 @@ const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    return res.status(200).json({ lastPost: global._lastPost || 'no posts yet' });
+    return res.status(200).json({ lastResult: global._lastResult || 'no results yet' });
   }
 
   if (req.method !== 'POST') {
@@ -11,18 +11,11 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.INTAKEQ_API_KEY;
   const data = req.body;
-
-  global._lastPost = {
-    time: new Date().toISOString(),
-    hasData: !!data,
-    hasKey: !!apiKey,
-    fname: data ? data.fname : 'no data',
-    lname: data ? data.lname : 'no data',
-    email: data ? data.email : 'no data',
-  };
-
   let clientId = null;
   let error = null;
+  let intakeqStatus = null;
+  let intakeqBody = null;
+
   try {
     const r = await fetch(INTAKEQ_API_BASE + '/clients', {
       method: 'POST',
@@ -35,16 +28,26 @@ export default async function handler(req, res) {
         Notes: 'Booking test',
       }),
     });
-    const t = await r.text();
+    intakeqStatus = r.status;
+    intakeqBody = await r.text();
     if (r.ok) {
-      const parsed = JSON.parse(t);
+      const parsed = JSON.parse(intakeqBody);
       clientId = parsed.ClientId || parsed.Id;
     } else {
-      error = 'IntakeQ ' + r.status + ': ' + t.substring(0, 100);
+      error = 'IntakeQ ' + r.status;
     }
   } catch (e) {
     error = e.message;
   }
+
+  global._lastResult = {
+    time: new Date().toISOString(),
+    fname: data.fname,
+    clientId: clientId,
+    error: error,
+    intakeqStatus: intakeqStatus,
+    intakeqBody: intakeqBody ? intakeqBody.substring(0, 300) : null,
+  };
 
   return res.status(200).json({ success: true, clientId: clientId, error: error });
 }
