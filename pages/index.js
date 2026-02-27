@@ -341,10 +341,10 @@ function HomePage({ setPage }) {
         <div className="hero-content">
           <div className="hero-text-panel">
             <h1 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,2.2vw,1.8rem)', marginTop: '0.5rem' }}>
-              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to youâ€¦</em>
+              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to you..</em>
             </h1>
             <p className="hero-mission" style={{ borderLeft: 'none', paddingLeft: 0, textAlign: 'center', marginTop: '0.75rem' }}>
-              Experienced, compassionate care that comes to you. Healing means more than treating symptoms â€” it means nurturing the whole person with dignity, expertise, and heart.
+              Experienced, compassionate care that comes to you. Healing means more than treating illness; it means nurturing the whole person with dignity, expertise, and heart.
             </p>
             <div style={{ margin: '1rem 0 0.5rem' }}><LotusIcon size={60} /></div>
             <div style={{ width: 40, height: 1.5, background: 'var(--gold-soft)', margin: '0 auto' }} />
@@ -533,48 +533,46 @@ function ContactPage({ setPage }) {
   var addPatient = function () { setAdditionalPatients(function (prev) { return [...prev, emptyPatient()]; }); };
   var removePatient = function (id) { setAdditionalPatients(function (prev) { return prev.filter(function (p) { return p.id !== id; }); }); };
 
-  // Render typed text as a PNG image
-  var textToPng = function (text, font) {
+  /* â”€â”€ Signature capture helpers â”€â”€ */
+  var textToImage = function (text, font) {
     try {
-      var c = document.createElement('canvas'); c.width = 500; c.height = 120;
-      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
-      ctx.font = font || 'italic 32px "Cormorant Garamond", Georgia, serif';
+      var cv = document.createElement('canvas'); cv.width = 500; cv.height = 120;
+      var ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
+      ctx.font = font || 'italic 32px Georgia, serif';
       ctx.fillStyle = '#2E5A46'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(text, 250, 60); return c.toDataURL('image/png');
+      ctx.fillText(text, 250, 60); return cv.toDataURL('image/png');
     } catch (e) { return null; }
   };
-
-  // Capture intake signature (Step 1) as PNG
-  var getIntakeSigImage = function () {
-    if (intakeCanvasRef.current && intakeSignature === 'drawn_intake_sig') {
-      try { return intakeCanvasRef.current.toDataURL('image/png'); } catch (e) {}
-    }
-    if (intakeSignature && intakeSignature !== 'drawn_intake_sig') return textToPng(intakeSignature);
-    return null;
-  };
-
-  // Capture consent signature (Step 2) as PNG
-  var getConsentSigImage = function () {
-    if (signature === 'drawn-signature' && drawPoints.length > 1 && consentDrawRef.current) {
+  var captureConsentSig = function () {
+    if (signature === 'drawn-signature' && drawPoints.length > 1) {
       try {
-        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
-        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
-        ctx.strokeStyle = '#2E5A46'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        var box = consentDrawRef.current.getBoundingClientRect();
-        var sx = 500 / (box.width || 1); var sy = 120 / (box.height || 1);
+        var cv = document.createElement('canvas'); cv.width = 500; cv.height = 120;
+        var ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
+        ctx.strokeStyle = '#2E5A46'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        var el = consentDrawRef.current; if (!el) return textToImage('drawn');
+        var box = el.getBoundingClientRect(); var sx = 500 / (box.width || 1); var sy = 120 / (box.height || 1);
         ctx.beginPath();
         drawPoints.forEach(function (p, i) { if (i === 0) ctx.moveTo(p.x * sx, p.y * sy); else ctx.lineTo(p.x * sx, p.y * sy); });
-        ctx.stroke(); return c.toDataURL('image/png');
-      } catch (e) {}
+        ctx.stroke(); return cv.toDataURL('image/png');
+      } catch (e) { return null; }
     }
-    if (signature && signature !== 'drawn-signature') return textToPng(signature, 'italic 28px Georgia, serif');
+    if (signature && signature !== 'drawn-signature') return textToImage(signature);
+    return null;
+  };
+  var captureIntakeSig = function () {
+    if (intakeCanvasRef.current && intakeSignature === 'drawn_intake_sig') {
+      try { return intakeCanvasRef.current.toDataURL('image/png'); } catch (e) { return null; }
+    }
+    if (intakeSignature && intakeSignature !== 'drawn_intake_sig') return textToImage(intakeSignature);
     return null;
   };
 
-  // Track when each consent is checked
+  /* â”€â”€ Track consent timestamps for HIPAA audit â”€â”€ */
   var handleConsentChange = function (key, checked) {
-    setConsents(function (prev) { var n = {}; for (var k in prev) n[k] = prev[k]; n[key] = checked; return n; });
-    if (checked) setConsentTimestamps(function (prev) { var n = {}; for (var k in prev) n[k] = prev[k]; n[key] = new Date().toISOString(); return n; });
+    setConsents(function (prev) { var n = Object.assign({}, prev); n[key] = checked; return n; });
+    if (checked) {
+      setConsentTimestamps(function (prev) { var n = Object.assign({}, prev); n[key] = new Date().toISOString(); return n; });
+    }
   };
   var updatePatient = function (id, field, val) { setAdditionalPatients(function (prev) { return prev.map(function (p) { if (p.id === id) { var u = { ...p }; u[field] = val; return u; } return p; }); }); };
   var toggleService = function (currentServices, title) {
@@ -712,18 +710,17 @@ function ContactPage({ setPage }) {
 
   // â”€â”€ Submit to IntakeQ (HIPAA-secure) â”€â”€
   var submitToIntakeQ = async function (cardBrandVal, cardLast4Val, pmId) {
+    setSubmitError('');
     try {
-      setSubmitError('');
-      var consentSigImg = getConsentSigImage();
-      var intakeSigImg = getIntakeSigImage();
+      var consentSigImg = captureConsentSig();
+      var intakeSigImg = captureIntakeSig();
 
-      var resp = await fetch('/api/submit-intake', {
+      var response = await fetch('/api/submit-intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fname: form.fname, lname: form.lname, email: form.email,
-          phone: form.phone, address: form.address,
-          date: form.date, selTime: selTime,
+          fname: form.fname, lname: form.lname, email: form.email, phone: form.phone,
+          address: form.address, date: form.date, selTime: selTime,
           services: form.services, notes: form.notes,
           medicalHistory: form.medicalHistory, surgicalHistory: form.surgicalHistory,
           medications: form.medications, allergies: form.allergies,
@@ -731,10 +728,10 @@ function ContactPage({ setPage }) {
           consents: consents, consentTimestamps: consentTimestamps,
           signature: signature,
           signatureType: signature === 'drawn-signature' ? 'drawn' : (signature ? 'typed' : 'none'),
-          signatureImageData: consentSigImg || null,
+          signatureImageData: consentSigImg,
           intakeAcknowledged: intakeAcknowledged, intakeSignature: intakeSignature,
           intakeSignatureType: intakeSignature === 'drawn_intake_sig' ? 'drawn' : (intakeSignature ? 'typed' : 'none'),
-          intakeSignatureImageData: intakeSigImg || null,
+          intakeSignatureImageData: intakeSigImg,
           cardHolderName: cardHolderName, cardBrand: cardBrandVal || '',
           cardLast4: cardLast4Val || '', stripePaymentMethodId: pmId || '',
           additionalPatients: additionalPatients,
@@ -742,21 +739,21 @@ function ContactPage({ setPage }) {
       });
 
       var result = {};
-      try { result = await resp.json(); } catch (e) {}
+      try { result = await response.json(); } catch (e) {}
 
-      if (!resp.ok) {
-        console.error('IntakeQ submit failed:', resp.status, result);
-        setSubmitError('Record may not have saved. Please call (585) 747-2215 to confirm. (Error: ' + (result.error || resp.status) + ')');
-        if (result.log) console.log('Server log:', result.log);
+      if (result.log) console.log('Server log:', result.log);
+
+      if (!response.ok) {
+        console.error('Submit failed:', response.status, result);
+        setSubmitError('Your booking may not have saved. Please call (585) 747-2215 to confirm. Error: ' + (result.error || response.status));
         return false;
       }
 
-      console.log('IntakeQ submit success:', result);
-      if (result.log) console.log('Server log:', result.log);
+      console.log('Submit OK:', result);
       return true;
     } catch (e) {
-      console.error('IntakeQ submit network error:', e);
-      setSubmitError('Could not reach server. Please call (585) 747-2215 to confirm your booking.');
+      console.error('Submit error:', e);
+      setSubmitError('Could not reach the server. Please call (585) 747-2215 to confirm your booking.');
       return false;
     }
   };
@@ -1189,7 +1186,7 @@ function ContactPage({ setPage }) {
               <h2 style={{ ...TS, fontSize: '0.75rem' }}>Booking Confirmed!</h2>
               <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.65rem', lineHeight: 1.7, textAlign: 'center', maxWidth: 400, margin: '0 auto 1.5rem', fontFamily: "'Outfit',sans-serif" }}>Your appointment has been successfully booked.</p>
               {emailStatus === 'sent' && <div style={{ padding: '0.5rem 1rem', background: 'rgba(127,212,160,0.15)', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center' }}><p style={{ fontSize: '0.52rem', color: '#7FD4A0', fontFamily: "'Outfit',sans-serif" }}>{'\u2713'} Confirmation emails sent successfully</p></div>}
-              {submitError && <div style={{ padding: '0.75rem 1rem', background: 'rgba(255,100,100,0.15)', border: '1px solid rgba(255,100,100,0.3)', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center' }}><p style={{ fontSize: '0.52rem', color: '#FF9B9B', fontFamily: "'Outfit',sans-serif", lineHeight: 1.5 }}>{'\u26A0'} {submitError}</p></div>}
+              {submitError && <div style={{ padding: '0.75rem 1rem', background: 'rgba(255,80,80,0.15)', border: '1px solid rgba(255,80,80,0.3)', borderRadius: '8px', marginBottom: '1rem', textAlign: 'center' }}><p style={{ fontSize: '0.52rem', color: '#FF9B9B', fontFamily: "'Outfit',sans-serif", lineHeight: 1.5 }}>{'\u26A0'} {submitError}</p></div>}
               <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '1.25rem' }}>
                 <h3 style={{ fontFamily: "'Outfit',sans-serif", color: 'var(--gold-soft)', fontSize: '0.55rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>Booking Details</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
