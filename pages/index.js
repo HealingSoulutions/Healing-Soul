@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DATA
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const serviceCategories = [
   {
@@ -67,9 +67,9 @@ const timeSlots = [
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
 ];
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CONSENT TEXTS
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 const CONSENT_TREATMENT = `INFORMED CONSENT FOR TREATMENT - BT RPN PLLC & Kristina Castro, NP PLLC d/b/a Healing Soulutions
 Effective Date: March 15, 2026
@@ -111,11 +111,11 @@ Effective Date: March 15, 2026
 
 This notice is required by the Health Insurance Portability and Accountability Act of 1996 (HIPAA), the Health Information Technology for Economic and Clinical Health Act (HITECH), 45 CFR Parts 160 and 164, and applicable New York State law to inform you of how your Protected Health Information (PHI) may be used and disclosed, and your rights regarding your PHI.
 
-PERMITTED USES AND DISCLOSURES: Your PHI may be used and disclosed without your authorization for the following purposes: (a) Treatment — to provide, coordinate, and manage your healthcare and related services, including consultations between healthcare providers; (b) Payment — to obtain reimbursement for services, including billing, claims management, and collection activities; (c) Healthcare Operations — to support the business activities of the Practice including quality assessment, staff training, compliance, auditing, and business planning; (d) As Required by Law — when federal, state, or local law requires disclosure; (e) Public Health Activities — as required for public health surveillance, investigations, or interventions; (f) Business Associates — to entities that perform services on our behalf under a Business Associate Agreement that requires them to safeguard your PHI.
+PERMITTED USES AND DISCLOSURES: Your PHI may be used and disclosed without your authorization for the following purposes: (a) Treatment â€” to provide, coordinate, and manage your healthcare and related services, including consultations between healthcare providers; (b) Payment â€” to obtain reimbursement for services, including billing, claims management, and collection activities; (c) Healthcare Operations â€” to support the business activities of the Practice including quality assessment, staff training, compliance, auditing, and business planning; (d) As Required by Law â€” when federal, state, or local law requires disclosure; (e) Public Health Activities â€” as required for public health surveillance, investigations, or interventions; (f) Business Associates â€” to entities that perform services on our behalf under a Business Associate Agreement that requires them to safeguard your PHI.
 
 AUTHORIZATION REQUIRED: Written authorization is required before we may use or disclose your PHI for the following: psychotherapy notes; marketing purposes; sale of PHI; HIV-related information (NY PHL Article 27-F); substance abuse treatment records (42 CFR Part 2); mental health records (NY MHL Section 33.13); and genetic information (Genetic Information Nondiscrimination Act - GINA). You may revoke any authorization in writing at any time, except to the extent the Practice has already acted in reliance upon it.
 
-YOUR RIGHTS: You have the following rights regarding your PHI: (1) Right to Access — request copies of your PHI within 30 days; (2) Right to Amendment — request corrections to your PHI; (3) Right to an Accounting of Disclosures — request a list of certain disclosures made of your PHI; (4) Right to Request Restrictions — request limitations on how your PHI is used or disclosed; (5) Right to Confidential Communications — request that we communicate with you by alternative means or at alternative locations; (6) Right to a Paper Copy — obtain a paper copy of this notice upon request; (7) Right to Breach Notification — be notified in the event of a breach of your unsecured PHI as required by the HITECH Act.
+YOUR RIGHTS: You have the following rights regarding your PHI: (1) Right to Access â€” request copies of your PHI within 30 days; (2) Right to Amendment â€” request corrections to your PHI; (3) Right to an Accounting of Disclosures â€” request a list of certain disclosures made of your PHI; (4) Right to Request Restrictions â€” request limitations on how your PHI is used or disclosed; (5) Right to Confidential Communications â€” request that we communicate with you by alternative means or at alternative locations; (6) Right to a Paper Copy â€” obtain a paper copy of this notice upon request; (7) Right to Breach Notification â€” be notified in the event of a breach of your unsecured PHI as required by the HITECH Act.
 
 MINIMUM NECESSARY STANDARD: The Practice applies the minimum necessary standard when using or disclosing PHI, ensuring that only the minimum amount of information necessary to accomplish the intended purpose is used or disclosed.
 
@@ -138,7 +138,7 @@ SPECIAL CATEGORIES REQUIRING SEPARATE AUTHORIZATION: I understand that separate 
 
 OBLIGATION TO DISCLOSE: I understand that I have an affirmative obligation to fully and truthfully disclose all relevant medical information to my clinician, including but not limited to: all current and past medical conditions and diagnoses; all current medications (prescription, over-the-counter, supplements, and herbal remedies) and dosages; all known allergies and prior adverse reactions to medications or substances; all prior surgeries, hospitalizations, and medical procedures; family medical history relevant to my treatment; current pregnancy or plans for pregnancy; and any other information that may be relevant to my care and treatment. I understand that incomplete or inaccurate disclosure may result in serious adverse health consequences, including dangerous drug interactions, allergic reactions, or other complications, and that the Practice shall not be held liable for any adverse outcomes resulting from my failure to provide complete and accurate medical information.
 
-SUBSTANCE USE & PATIENT SAFETY DISCLOSURE: I understand that honestly disclosing the use of all substances—including alcohol, marijuana/cannabis, nicotine, and recreational or illicit drugs—is vital for my safety. Many substances can cause dangerous, life-threatening interactions with the medical treatments, IV therapies, and medications provided by the Practice (e.g., cardiac arrest, seizure, or respiratory failure). Confidentiality: I understand that this information is Protected Health Information (PHI) and will remain confidential in accordance with HIPAA; the Practice does not report substance use to law enforcement. Liability Release: I acknowledge that if I fail to disclose substance use, the Practice cannot anticipate potential drug interactions. Therefore, I agree to hold the Practice and its providers harmless from any adverse reactions or complications that result from my failure to provide a complete and accurate history of substance use.
+SUBSTANCE USE & PATIENT SAFETY DISCLOSURE: I understand that honestly disclosing the use of all substancesâ€”including alcohol, marijuana/cannabis, nicotine, and recreational or illicit drugsâ€”is vital for my safety. Many substances can cause dangerous, life-threatening interactions with the medical treatments, IV therapies, and medications provided by the Practice (e.g., cardiac arrest, seizure, or respiratory failure). Confidentiality: I understand that this information is Protected Health Information (PHI) and will remain confidential in accordance with HIPAA; the Practice does not report substance use to law enforcement. Liability Release: I acknowledge that if I fail to disclose substance use, the Practice cannot anticipate potential drug interactions. Therefore, I agree to hold the Practice and its providers harmless from any adverse reactions or complications that result from my failure to provide a complete and accurate history of substance use.
 
 ACCURACY CERTIFICATION: I certify that all medical information provided by me, whether written or verbal, is complete, accurate, and truthful to the best of my knowledge. I understand that providing false or misleading medical information may constitute fraud and may result in adverse medical outcomes for which the Practice shall bear no liability.
 
@@ -167,9 +167,9 @@ DISPUTE RESOLUTION: Any billing disputes must be submitted in writing within 30 
 
 ACKNOWLEDGMENT: By signing below, I certify that I am at least 18 years of age (or the legal guardian of the patient), that I have read and fully understand this Financial Agreement, that I accept financial responsibility for all services rendered, and that I agree to all terms and conditions set forth herein.`;
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ICONS
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function LotusIcon({ size = 60, color = 'rgba(193,163,98' }) {
   return (
@@ -219,9 +219,9 @@ function GoldPinIcon({ size = 14 }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SCENE BACKGROUND (no lotus flowers)
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function SceneBackground() {
   return (
@@ -281,9 +281,9 @@ function SceneBackground() {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    NAV
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Nav({ page, setPage }) {
   const [mo, setMo] = useState(false);
@@ -309,9 +309,9 @@ function Nav({ page, setPage }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    FOOTER
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function Footer({ setPage }) {
   return (
@@ -329,9 +329,9 @@ function Footer({ setPage }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    HOME PAGE
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function HomePage({ setPage }) {
   return (
@@ -341,10 +341,10 @@ function HomePage({ setPage }) {
         <div className="hero-content">
           <div className="hero-text-panel">
             <h1 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,2.2vw,1.8rem)', marginTop: '0.5rem' }}>
-              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to you…</em>
+              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to youâ€¦</em>
             </h1>
             <p className="hero-mission" style={{ borderLeft: 'none', paddingLeft: 0, textAlign: 'center', marginTop: '0.75rem' }}>
-              Experienced, compassionate care that comes to you. Healing means more than treating symptoms — it means nurturing the whole person with dignity, expertise, and heart.
+              Experienced, compassionate care that comes to you. Healing means more than treating symptoms â€” it means nurturing the whole person with dignity, expertise, and heart.
             </p>
             <div style={{ margin: '1rem 0 0.5rem' }}><LotusIcon size={60} /></div>
             <div style={{ width: 40, height: 1.5, background: 'var(--gold-soft)', margin: '0 auto' }} />
@@ -399,9 +399,9 @@ function HomePage({ setPage }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SERVICES PAGE
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function ServicesPage({ setPage }) {
   const [openCat, setOpenCat] = useState(null);
@@ -468,9 +468,9 @@ function ServicesPage({ setPage }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    CONTACT / BOOKING PAGE
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 function ContactPage({ setPage }) {
   const [step, setStep] = useState(1);
@@ -498,8 +498,11 @@ function ContactPage({ setPage }) {
   const [intakeSigMode, setIntakeSigMode] = useState('type');
   const [intakeDrawing, setIntakeDrawing] = useState(false);
   const [intakeDrawPoints, setIntakeDrawPoints] = useState([]);
+  const [consentTimestamps, setConsentTimestamps] = useState({});
+  const intakeCanvasRef = useRef(null);
+  const consentSigContainerRef = useRef(null);
 
-  // ── Stripe State ──
+  // â”€â”€ Stripe State â”€â”€
   const stripeRef = useRef(null);
   const elementsRef = useRef(null);
   const paymentMountRef = useRef(null);
@@ -517,17 +520,76 @@ function ContactPage({ setPage }) {
   const [fallbackCardExp, setFallbackCardExp] = useState('');
   const [fallbackCardCvc, setFallbackCardCvc] = useState('');
 
-  // ── Stripe publishable key from env ──
+  // â”€â”€ Stripe publishable key from env â”€â”€
   const STRIPE_PK = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_live_51T0RgN33pC3rM5e8T3LAZUvyEUWa2tFIf1pIbOSIlnKO3HzXhcmlmSh7hH081XPhmNa9R4ImGKowDKagzjfeOYyf00zmP9iREh';
 
   var cardComplete = stripeFailed
     ? (fallbackCardNum.replace(/\D/g, '').length >= 15 && fallbackCardExp.replace(/\D/g, '').length >= 4 && fallbackCardCvc.replace(/\D/g, '').length >= 3)
     : paymentComplete;
 
-  // ── Patient helpers ──
+  // â”€â”€ Patient helpers â”€â”€
   var emptyPatient = function () { return { id: Date.now(), fname: '', lname: '', services: [], medicalHistory: '', surgicalHistory: '', medications: '', allergies: '', clinicianNotes: '' }; };
   var addPatient = function () { setAdditionalPatients(function (prev) { return [...prev, emptyPatient()]; }); };
   var removePatient = function (id) { setAdditionalPatients(function (prev) { return prev.filter(function (p) { return p.id !== id; }); }); };
+
+  // â”€â”€ Signature capture helpers â”€â”€
+  // Capture the intake canvas (Step 1) as a PNG data URL
+  var captureIntakeSignature = function () {
+    if (intakeCanvasRef.current) {
+      try { return intakeCanvasRef.current.toDataURL('image/png'); } catch (e) { console.error('Intake sig capture error:', e); }
+    }
+    // For typed signatures, render text onto a canvas
+    if (intakeSignature && intakeSignature !== 'drawn_intake_sig') {
+      try {
+        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
+        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
+        ctx.font = 'italic 32px "Cormorant Garamond", Georgia, serif'; ctx.fillStyle = '#2E5A46';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(intakeSignature, 250, 60);
+        return c.toDataURL('image/png');
+      } catch (e) { console.error('Typed intake sig render error:', e); }
+    }
+    return null;
+  };
+
+  // Capture the consent SVG signature (Step 2) as a PNG data URL
+  var captureConsentSignature = function () {
+    // For drawn SVG signatures
+    if (signature === 'drawn-signature' && drawPoints.length > 1 && consentSigContainerRef.current) {
+      try {
+        var svg = consentSigContainerRef.current.querySelector('svg');
+        if (svg) {
+          var c = document.createElement('canvas'); c.width = 500; c.height = 120;
+          var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
+          ctx.strokeStyle = '#2E5A46'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          var rect = consentSigContainerRef.current.getBoundingClientRect();
+          var sx = 500 / rect.width; var sy = 120 / rect.height;
+          ctx.beginPath();
+          drawPoints.forEach(function (p, i) { if (i === 0) ctx.moveTo(p.x * sx, p.y * sy); else ctx.lineTo(p.x * sx, p.y * sy); });
+          ctx.stroke();
+          return c.toDataURL('image/png');
+        }
+      } catch (e) { console.error('SVG sig capture error:', e); }
+    }
+    // For typed signatures, render text onto a canvas
+    if (signature && signature !== 'drawn-signature') {
+      try {
+        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
+        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
+        ctx.font = 'italic 28px Georgia, serif'; ctx.fillStyle = '#2E5A46';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(signature, 250, 60);
+        return c.toDataURL('image/png');
+      } catch (e) { console.error('Typed consent sig render error:', e); }
+    }
+    return null;
+  };
+
+  // Record timestamp when a consent is checked
+  var handleConsentChange = function (key, checked) {
+    setConsents(function (prev) { return Object.assign({}, prev, { [key]: checked }); });
+    if (checked) {
+      setConsentTimestamps(function (prev) { return Object.assign({}, prev, { [key]: new Date().toISOString() }); });
+    }
+  };
   var updatePatient = function (id, field, val) { setAdditionalPatients(function (prev) { return prev.map(function (p) { if (p.id === id) { var u = { ...p }; u[field] = val; return u; } return p; }); }); };
   var toggleService = function (currentServices, title) {
     if (currentServices.indexOf(title) >= 0) return currentServices.filter(function (s) { return s !== title; });
@@ -538,7 +600,7 @@ function ContactPage({ setPage }) {
   var isPeptideService = function (title) { return !!peptideServiceTitles[title]; };
   var formatServiceLabel = function (title) { return isPeptideService(title) ? title + ' (Consultation)' : title; };
 
-  // ── Card helpers ──
+  // â”€â”€ Card helpers â”€â”€
   function detectBrand(n) { n = n.replace(/\s/g, ''); if (/^4/.test(n)) return 'visa'; if (/^5[1-5]/.test(n) || /^2[2-7]/.test(n)) return 'mastercard'; if (/^3[47]/.test(n)) return 'amex'; if (/^6(?:011|5)/.test(n)) return 'discover'; return ''; }
   function formatNum(val) { var n = val.replace(/\D/g, ''); var b = detectBrand(n); var mx = b === 'amex' ? 15 : 16; n = n.slice(0, mx); if (b === 'amex') return n.replace(/(\d{4})(\d{0,6})(\d{0,5})/, function (m, a, bb, c) { return a + (bb ? ' ' + bb : '') + (c ? ' ' + c : ''); }).trim(); return n.replace(/(\d{4})(?=\d)/g, '$1 ').trim(); }
   function formatExp(val) { var n = val.replace(/\D/g, '').slice(0, 4); if (n.length >= 3) return n.slice(0, 2) + ' / ' + n.slice(2); return n; }
@@ -547,7 +609,7 @@ function ContactPage({ setPage }) {
   function handleFallbackExp(val) { setFallbackCardExp(formatExp(val)); }
   function handleFallbackCvc(val) { var mx = detectedBrand === 'amex' ? 4 : 3; setFallbackCardCvc(val.replace(/\D/g, '').slice(0, mx)); }
 
-  // ── Load Stripe.js ──
+  // â”€â”€ Load Stripe.js â”€â”€
   useEffect(function () {
     if (window.Stripe) { setStripeLoaded(true); return; }
     var s = document.createElement('script');
@@ -558,7 +620,7 @@ function ContactPage({ setPage }) {
     document.head.appendChild(s);
   }, []);
 
-  // ── Initialize Stripe ──
+  // â”€â”€ Initialize Stripe â”€â”€
   useEffect(function () {
     if (!stripeLoaded || stripeRef.current) return;
     try {
@@ -568,7 +630,7 @@ function ContactPage({ setPage }) {
     }
   }, [stripeLoaded, STRIPE_PK]);
 
-  // ── Fetch SetupIntent and mount Payment Element on step 3 ──
+  // â”€â”€ Fetch SetupIntent and mount Payment Element on step 3 â”€â”€
   useEffect(function () {
     if (step !== 3 || !stripeLoaded || !stripeRef.current || stripeMountedRef.current) return;
     var cancelled = false;
@@ -662,10 +724,14 @@ function ContactPage({ setPage }) {
 
   useEffect(function () { if (step !== 3) { setStripeReady(false); setPaymentComplete(false); stripeMountedRef.current = false; setDetectedBrand(''); setSetupClientSecret(''); } }, [step]);
 
-  // ── Submit to IntakeQ (HIPAA-secure) ──
+  // â”€â”€ Submit to IntakeQ (HIPAA-secure) â”€â”€
   var submitToIntakeQ = async function (cardBrandVal, cardLast4Val, pmId) {
     try {
-      await fetch('/api/submit-intake', {
+      // Capture signature images before sending
+      var consentSigImage = captureConsentSignature();
+      var intakeSigImage = captureIntakeSignature();
+
+      var resp = await fetch('/api/submit-intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -676,18 +742,29 @@ function ContactPage({ setPage }) {
           medications: form.medications, allergies: form.allergies,
           clinicianNotes: form.clinicianNotes,
           consents: consents, signature: signature,
+          signatureType: signature === 'drawn-signature' ? 'drawn' : (signature ? 'typed' : 'none'),
+          signatureImageData: consentSigImage || null,
           intakeAcknowledged: intakeAcknowledged, intakeSignature: intakeSignature,
+          intakeSignatureType: intakeSignature === 'drawn_intake_sig' ? 'drawn' : (intakeSignature ? 'typed' : 'none'),
+          intakeSignatureImageData: intakeSigImage || null,
+          consentTimestamps: consentTimestamps,
+          consentVersion: '2025-02',
           cardHolderName: cardHolderName, cardBrand: cardBrandVal || '',
           cardLast4: cardLast4Val || '', stripePaymentMethodId: pmId || '',
           additionalPatients: additionalPatients,
         }),
       });
+
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function () { return {}; });
+        console.error('IntakeQ submit failed:', resp.status, errData);
+      }
     } catch (e) {
       console.error('IntakeQ submit error:', e);
     }
   };
 
-  // ── Stripe payment + card verification ──
+  // â”€â”€ Stripe payment + card verification â”€â”€
   var handleStripePayment = async function () {
     if (!cardHolderName.trim()) { setStripeError('Please enter the name on card.'); return; }
     if (!cardComplete) { setStripeError('Please complete all payment fields.'); return; }
@@ -751,7 +828,7 @@ function ContactPage({ setPage }) {
     }
   };
 
-  // ── Step navigation ──
+  // â”€â”€ Step navigation â”€â”€
   var stepTitles = { 1: 'Appointment Information', 2: 'Consent Forms', 3: 'Card on File', 4: 'Confirmation' };
   useEffect(function () { setStepAnnouncement('Step ' + step + ' of 4: ' + stepTitles[step]); if (stepHeadingRef.current) stepHeadingRef.current.focus(); }, [step]);
 
@@ -768,7 +845,7 @@ function ContactPage({ setPage }) {
   var stepItems = [{ num: 1, label: 'Appointment' }, { num: 2, label: 'Consent Forms' }, { num: 3, label: 'Card on File' }, { num: 4, label: 'Confirmation' }];
   var backBtn = { flex: 1, padding: '0.7rem', fontSize: '0.6rem', fontFamily: "'Outfit',sans-serif", fontWeight: 600, background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '8px', cursor: 'pointer' };
 
-  // ── Service Picker ──
+  // â”€â”€ Service Picker â”€â”€
   var renderServicePicker = function (selectedServices, onToggle) {
     return (
       <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -823,7 +900,7 @@ function ContactPage({ setPage }) {
     );
   };
 
-  // ── Consent renderer ──
+  // â”€â”€ Consent renderer â”€â”€
   var renderConsent = function (cf) {
     var paragraphs = cf.text.split('\n\n').filter(function (p) { return p.trim(); });
     return (
@@ -837,7 +914,7 @@ function ContactPage({ setPage }) {
           })}
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-          <input type="checkbox" checked={consents[cf.key]} onChange={(e) => setConsents({ ...consents, [cf.key]: e.target.checked })} style={{ marginTop: '0.15rem', accentColor: '#7FD4A0' }} />
+          <input type="checkbox" checked={consents[cf.key]} onChange={(e) => handleConsentChange(cf.key, e.target.checked)} style={{ marginTop: '0.15rem', accentColor: '#7FD4A0' }} />
           <label style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.8)', fontFamily: "'Outfit',sans-serif", lineHeight: 1.5 }}>I have read, understand, and agree to the {cf.title}</label>
         </div>
       </div>
@@ -874,7 +951,7 @@ function ContactPage({ setPage }) {
 
         <div style={{ padding: '0.5rem 3rem 3rem', maxWidth: 800, margin: '0 auto' }}>
 
-          {/* ══════ STEP 1: Appointment ══════ */}
+          {/* â•â•â•â•â•â• STEP 1: Appointment â•â•â•â•â•â• */}
           {step === 1 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {/* Contact info cards */}
@@ -1001,7 +1078,7 @@ function ContactPage({ setPage }) {
                       <input type="text" placeholder="Type your full legal name" value={intakeSignature} onChange={(e) => setIntakeSignature(e.target.value)} style={{ ...IS, fontFamily: "'Cormorant Garamond',serif", fontSize: '1.1rem', fontStyle: 'italic', fontWeight: 500 }} />
                     ) : (
                       <div style={{ position: 'relative' }}>
-                        <canvas width={500} height={120} style={{ width: '100%', height: '80px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', cursor: 'crosshair' }}
+                        <canvas ref={intakeCanvasRef} width={500} height={120} style={{ width: '100%', height: '80px', background: 'rgba(0,0,0,0.15)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.15)', cursor: 'crosshair' }}
                           onMouseDown={(e) => { setIntakeDrawing(true); var r = e.target.getBoundingClientRect(); setIntakeDrawPoints([{ x: e.clientX - r.left, y: e.clientY - r.top }]); }}
                           onMouseMove={(e) => { if (!intakeDrawing) return; var r = e.target.getBoundingClientRect(); var np = [...intakeDrawPoints, { x: e.clientX - r.left, y: e.clientY - r.top }]; setIntakeDrawPoints(np); var ctx = e.target.getContext('2d'); ctx.strokeStyle = '#D4BC82'; ctx.lineWidth = 2; ctx.lineCap = 'round'; if (np.length >= 2) { ctx.beginPath(); ctx.moveTo(np[np.length - 2].x * (500 / e.target.offsetWidth), np[np.length - 2].y * (120 / e.target.offsetHeight)); ctx.lineTo(np[np.length - 1].x * (500 / e.target.offsetWidth), np[np.length - 1].y * (120 / e.target.offsetHeight)); ctx.stroke(); } }}
                           onMouseUp={() => { setIntakeDrawing(false); if (intakeDrawPoints.length > 2) setIntakeSignature('drawn_intake_sig'); }}
@@ -1022,7 +1099,7 @@ function ContactPage({ setPage }) {
             </div>
           )}
 
-          {/* ══════ STEP 2: Consent Forms ══════ */}
+          {/* â•â•â•â•â•â• STEP 2: Consent Forms â•â•â•â•â•â• */}
           {step === 2 && (
             <div style={CS}>
               <h2 style={{ ...TS, marginBottom: '0.25rem' }}>Patient Consent Forms</h2>
@@ -1041,7 +1118,7 @@ function ContactPage({ setPage }) {
                   </div>
                 ) : (
                   <div>
-                    <div style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '8px', height: '120px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                    <div ref={consentSigContainerRef} style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '8px', height: '120px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                       onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); setIsDrawing(true); var r = e.currentTarget.getBoundingClientRect(); setDrawPoints([{ x: e.clientX - r.left, y: e.clientY - r.top }]); }}
                       onPointerMove={(e) => { if (!isDrawing) return; e.preventDefault(); var r = e.currentTarget.getBoundingClientRect(); setDrawPoints((p) => [...p, { x: e.clientX - r.left, y: e.clientY - r.top }]); }}
                       onPointerUp={(e) => { setIsDrawing(false); e.currentTarget.releasePointerCapture(e.pointerId); if (drawPoints.length > 3) setSignature('drawn-signature'); }}
@@ -1066,7 +1143,7 @@ function ContactPage({ setPage }) {
             </div>
           )}
 
-          {/* ══════ STEP 3: Payment Method (Stripe Payment Element) ══════ */}
+          {/* â•â•â•â•â•â• STEP 3: Payment Method (Stripe Payment Element) â•â•â•â•â•â• */}
           {step === 3 && (
             <div style={CS}>
               <h2 style={{ ...TS, marginBottom: '0.25rem' }}>Payment Method</h2>
@@ -1108,7 +1185,7 @@ function ContactPage({ setPage }) {
             </div>
           )}
 
-          {/* ══════ STEP 4: Confirmation ══════ */}
+          {/* â•â•â•â•â•â• STEP 4: Confirmation â•â•â•â•â•â• */}
           {step === 4 && (
             <div style={CS}>
               <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem', textAlign: 'center' }}>{'\u2705'}</div>
@@ -1155,9 +1232,9 @@ function ContactPage({ setPage }) {
   );
 }
 
-/* ═══════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    APP
-   ═══════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 export default function App() {
   const [page, setPage] = useState('home');
