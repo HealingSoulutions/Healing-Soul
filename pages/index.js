@@ -341,10 +341,10 @@ function HomePage({ setPage }) {
         <div className="hero-content">
           <div className="hero-text-panel">
             <h1 style={{ textAlign: 'center', fontSize: 'clamp(1.2rem,2.2vw,1.8rem)', marginTop: '0.5rem' }}>
-              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to you..</em>
+              <em style={{ fontWeight: 700, fontStyle: 'italic' }}>We bring healing to youâ€¦</em>
             </h1>
             <p className="hero-mission" style={{ borderLeft: 'none', paddingLeft: 0, textAlign: 'center', marginTop: '0.75rem' }}>
-              Experienced, compassionate care that comes to you. Healing means more than treating illness; it means nurturing the whole person with dignity, expertise, and heart.
+              Experienced, compassionate care that comes to you. Healing means more than treating symptoms â€” it means nurturing the whole person with dignity, expertise, and heart.
             </p>
             <div style={{ margin: '1rem 0 0.5rem' }}><LotusIcon size={60} /></div>
             <div style={{ width: 40, height: 1.5, background: 'var(--gold-soft)', margin: '0 auto' }} />
@@ -500,7 +500,7 @@ function ContactPage({ setPage }) {
   const [intakeDrawPoints, setIntakeDrawPoints] = useState([]);
   const [consentTimestamps, setConsentTimestamps] = useState({});
   const intakeCanvasRef = useRef(null);
-  const consentSigContainerRef = useRef(null);
+  const consentDrawRef = useRef(null);
 
   // â”€â”€ Stripe State â”€â”€
   const stripeRef = useRef(null);
@@ -532,62 +532,56 @@ function ContactPage({ setPage }) {
   var addPatient = function () { setAdditionalPatients(function (prev) { return [...prev, emptyPatient()]; }); };
   var removePatient = function (id) { setAdditionalPatients(function (prev) { return prev.filter(function (p) { return p.id !== id; }); }); };
 
-  // â”€â”€ Signature capture helpers â”€â”€
-  // Capture the intake canvas (Step 1) as a PNG data URL
-  var captureIntakeSignature = function () {
-    if (intakeCanvasRef.current) {
-      try { return intakeCanvasRef.current.toDataURL('image/png'); } catch (e) { console.error('Intake sig capture error:', e); }
+  /* â”€â”€ Signature image capture helpers â”€â”€ */
+  var renderTypedSig = function (text, fontFamily) {
+    try {
+      var c = document.createElement('canvas'); c.width = 500; c.height = 120;
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 500, 120);
+      ctx.font = 'italic 32px ' + (fontFamily || '"Cormorant Garamond", Georgia, serif');
+      ctx.fillStyle = '#2E5A46'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, 250, 60);
+      return c.toDataURL('image/png');
+    } catch (e) { return null; }
+  };
+
+  var captureIntakeSignatureImage = function () {
+    // Drawn on canvas
+    if (intakeCanvasRef.current && intakeSignature === 'drawn_intake_sig') {
+      try { return intakeCanvasRef.current.toDataURL('image/png'); } catch (e) {}
     }
-    // For typed signatures, render text onto a canvas
+    // Typed
     if (intakeSignature && intakeSignature !== 'drawn_intake_sig') {
-      try {
-        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
-        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
-        ctx.font = 'italic 32px "Cormorant Garamond", Georgia, serif'; ctx.fillStyle = '#2E5A46';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(intakeSignature, 250, 60);
-        return c.toDataURL('image/png');
-      } catch (e) { console.error('Typed intake sig render error:', e); }
+      return renderTypedSig(intakeSignature);
     }
     return null;
   };
 
-  // Capture the consent SVG signature (Step 2) as a PNG data URL
-  var captureConsentSignature = function () {
-    // For drawn SVG signatures
-    if (signature === 'drawn-signature' && drawPoints.length > 1 && consentSigContainerRef.current) {
+  var captureConsentSignatureImage = function () {
+    // Drawn SVG â†’ canvas
+    if (signature === 'drawn-signature' && drawPoints.length > 1 && consentDrawRef.current) {
       try {
-        var svg = consentSigContainerRef.current.querySelector('svg');
-        if (svg) {
-          var c = document.createElement('canvas'); c.width = 500; c.height = 120;
-          var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
-          ctx.strokeStyle = '#2E5A46'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-          var rect = consentSigContainerRef.current.getBoundingClientRect();
-          var sx = 500 / rect.width; var sy = 120 / rect.height;
-          ctx.beginPath();
-          drawPoints.forEach(function (p, i) { if (i === 0) ctx.moveTo(p.x * sx, p.y * sy); else ctx.lineTo(p.x * sx, p.y * sy); });
-          ctx.stroke();
-          return c.toDataURL('image/png');
-        }
-      } catch (e) { console.error('SVG sig capture error:', e); }
+        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
+        var ctx = c.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 500, 120);
+        ctx.strokeStyle = '#2E5A46'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        var box = consentDrawRef.current.getBoundingClientRect();
+        var sx = 500 / (box.width || 1); var sy = 120 / (box.height || 1);
+        ctx.beginPath();
+        drawPoints.forEach(function (p, i) { if (i === 0) ctx.moveTo(p.x * sx, p.y * sy); else ctx.lineTo(p.x * sx, p.y * sy); });
+        ctx.stroke();
+        return c.toDataURL('image/png');
+      } catch (e) {}
     }
-    // For typed signatures, render text onto a canvas
+    // Typed
     if (signature && signature !== 'drawn-signature') {
-      try {
-        var c = document.createElement('canvas'); c.width = 500; c.height = 120;
-        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 500, 120);
-        ctx.font = 'italic 28px Georgia, serif'; ctx.fillStyle = '#2E5A46';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(signature, 250, 60);
-        return c.toDataURL('image/png');
-      } catch (e) { console.error('Typed consent sig render error:', e); }
+      return renderTypedSig(signature, 'Georgia, serif');
     }
     return null;
   };
 
-  // Record timestamp when a consent is checked
   var handleConsentChange = function (key, checked) {
-    setConsents(function (prev) { return Object.assign({}, prev, { [key]: checked }); });
+    setConsents(function (prev) { var next = {}; for (var k in prev) next[k] = prev[k]; next[key] = checked; return next; });
     if (checked) {
-      setConsentTimestamps(function (prev) { return Object.assign({}, prev, { [key]: new Date().toISOString() }); });
+      setConsentTimestamps(function (prev) { var next = {}; for (var k in prev) next[k] = prev[k]; next[key] = new Date().toISOString(); return next; });
     }
   };
   var updatePatient = function (id, field, val) { setAdditionalPatients(function (prev) { return prev.map(function (p) { if (p.id === id) { var u = { ...p }; u[field] = val; return u; } return p; }); }); };
@@ -727,40 +721,62 @@ function ContactPage({ setPage }) {
   // â”€â”€ Submit to IntakeQ (HIPAA-secure) â”€â”€
   var submitToIntakeQ = async function (cardBrandVal, cardLast4Val, pmId) {
     try {
-      // Capture signature images before sending
-      var consentSigImage = captureConsentSignature();
-      var intakeSigImage = captureIntakeSignature();
+      // Capture signature images right before sending
+      var consentSigImg = captureConsentSignatureImage();
+      var intakeSigImg = captureIntakeSignatureImage();
+
+      console.log('[Submit] Sending to /api/submit-intake...', {
+        consentSig: consentSigImg ? 'captured' : 'none',
+        intakeSig: intakeSigImg ? 'captured' : 'none',
+        consents: consents,
+      });
 
       var resp = await fetch('/api/submit-intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fname: form.fname, lname: form.lname, email: form.email, phone: form.phone,
-          address: form.address, date: form.date, selTime: selTime,
+          // Patient info
+          fname: form.fname, lname: form.lname, email: form.email,
+          phone: form.phone, address: form.address,
+          // Appointment
+          date: form.date, selTime: selTime,
           services: form.services, notes: form.notes,
-          medicalHistory: form.medicalHistory, surgicalHistory: form.surgicalHistory,
-          medications: form.medications, allergies: form.allergies,
+          // Medical history
+          medicalHistory: form.medicalHistory,
+          surgicalHistory: form.surgicalHistory,
+          medications: form.medications,
+          allergies: form.allergies,
           clinicianNotes: form.clinicianNotes,
-          consents: consents, signature: signature,
-          signatureType: signature === 'drawn-signature' ? 'drawn' : (signature ? 'typed' : 'none'),
-          signatureImageData: consentSigImage || null,
-          intakeAcknowledged: intakeAcknowledged, intakeSignature: intakeSignature,
-          intakeSignatureType: intakeSignature === 'drawn_intake_sig' ? 'drawn' : (intakeSignature ? 'typed' : 'none'),
-          intakeSignatureImageData: intakeSigImage || null,
+          // Consents (boolean flags)
+          consents: consents,
           consentTimestamps: consentTimestamps,
-          consentVersion: '2025-02',
-          cardHolderName: cardHolderName, cardBrand: cardBrandVal || '',
-          cardLast4: cardLast4Val || '', stripePaymentMethodId: pmId || '',
+          // Consent e-signature (Step 2)
+          signature: signature,
+          signatureType: signature === 'drawn-signature' ? 'drawn' : (signature ? 'typed' : 'none'),
+          signatureImageData: consentSigImg || null,
+          // Intake acknowledgment signature (Step 1)
+          intakeAcknowledged: intakeAcknowledged,
+          intakeSignature: intakeSignature,
+          intakeSignatureType: intakeSignature === 'drawn_intake_sig' ? 'drawn' : (intakeSignature ? 'typed' : 'none'),
+          intakeSignatureImageData: intakeSigImg || null,
+          // Payment
+          cardHolderName: cardHolderName,
+          cardBrand: cardBrandVal || '',
+          cardLast4: cardLast4Val || '',
+          stripePaymentMethodId: pmId || '',
+          // Additional patients
           additionalPatients: additionalPatients,
         }),
       });
 
+      var result = await resp.json().catch(function () { return {}; });
       if (!resp.ok) {
-        var errData = await resp.json().catch(function () { return {}; });
-        console.error('IntakeQ submit failed:', resp.status, errData);
+        console.error('[Submit] API error ' + resp.status + ':', result);
+      } else {
+        console.log('[Submit] Success:', result);
       }
     } catch (e) {
-      console.error('IntakeQ submit error:', e);
+      console.error('[Submit] Network error:', e);
     }
   };
 
@@ -1118,7 +1134,7 @@ function ContactPage({ setPage }) {
                   </div>
                 ) : (
                   <div>
-                    <div ref={consentSigContainerRef} style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '8px', height: '120px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                    <div ref={consentDrawRef} style={{ background: 'rgba(255,255,255,0.95)', borderRadius: '8px', height: '120px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                       onPointerDown={(e) => { e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); setIsDrawing(true); var r = e.currentTarget.getBoundingClientRect(); setDrawPoints([{ x: e.clientX - r.left, y: e.clientY - r.top }]); }}
                       onPointerMove={(e) => { if (!isDrawing) return; e.preventDefault(); var r = e.currentTarget.getBoundingClientRect(); setDrawPoints((p) => [...p, { x: e.clientX - r.left, y: e.clientY - r.top }]); }}
                       onPointerUp={(e) => { setIsDrawing(false); e.currentTarget.releasePointerCapture(e.pointerId); if (drawPoints.length > 3) setSignature('drawn-signature'); }}
