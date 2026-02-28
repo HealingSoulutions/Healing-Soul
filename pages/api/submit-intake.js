@@ -50,7 +50,7 @@ function formatAddress(d) {
   var parts = [];
   if (d.address1) parts.push(d.address1);
   if (d.address2) parts.push(d.address2);
-  var cityLine = [d.city, d.state, d.zipCode].filter(Boolean).join(', ');
+  var cityLine = [d.city, d.stateProvince || d.state, d.postalCode || d.zipCode].filter(Boolean).join(', ');
   if (cityLine) parts.push(cityLine);
   if (d.country && d.country !== 'United States') parts.push(d.country);
   return parts.join(', ') || (d.address || 'Not specified');
@@ -74,6 +74,9 @@ function buildPatientNotes(data) {
   s.push('Address: ' + formatAddress(data));
   if (data.notes) s.push('Notes: ' + data.notes);
 
+  s.push('\n=== PATIENT INFO ===');
+  if (data.dob) s.push('Date of Birth: ' + data.dob);
+
   s.push('\n=== MEDICAL INFORMATION ===');
   if (data.medicalSurgicalHistory) s.push('Medical/Surgical History: ' + data.medicalSurgicalHistory);
   if (data.medications) s.push('Medications: ' + data.medications);
@@ -86,13 +89,10 @@ function buildPatientNotes(data) {
   s.push('E-Signature: ' + (data.signature ? 'PROVIDED' : 'NOT PROVIDED'));
   s.push('Intake Acknowledgment: ' + (data.intakeAcknowledged ? 'ACKNOWLEDGED' : 'NOT ACKNOWLEDGED'));
 
-  if (data.consentSignatures) {
-    s.push('\n=== CONSENT SIGNATURES ===');
-    var labels = { treatment: 'Treatment', hipaa: 'HIPAA', medical: 'Medical Release', financial: 'Financial' };
-    Object.keys(data.consentSignatures).forEach(function (k) {
-      var sig = data.consentSignatures[k];
-      if (sig) s.push(labels[k] + ': ' + (sig.type === 'typed' ? 'Typed — ' + sig.text : 'Drawn — image attached'));
-    });
+  if (data.consentFormSignature) {
+    s.push('\n=== CONSENT SIGNATURE ===');
+    var cSig = data.consentFormSignature;
+    s.push('Signature: ' + (cSig.type === 'typed' ? 'Typed — ' + cSig.text : 'Drawn — image attached'));
   }
 
   s.push('\n=== PAYMENT ===');
@@ -104,6 +104,8 @@ function buildPatientNotes(data) {
     data.additionalPatients.forEach(function (pt, idx) {
       s.push('\n--- Patient ' + (idx + 2) + ' ---');
       s.push('Name: ' + (pt.fname || '') + ' ' + (pt.lname || ''));
+      if (pt.dob) s.push('Date of Birth: ' + pt.dob);
+      if (pt.phone) s.push('Phone: ' + pt.phone);
       s.push('Address: ' + formatAddress(pt));
       s.push('Services: ' + (pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary'));
       if (pt.medicalSurgicalHistory) s.push('Medical/Surgical History: ' + pt.medicalSurgicalHistory);
@@ -129,6 +131,7 @@ function buildBusinessEmailHtml(data) {
   h += '<div style="background:rgba(255,255,255,0.08);border-radius:8px;padding:16px;margin-bottom:16px;">';
   h += '<h2 style="color:#D4BC82;font-size:16px;margin:0 0 12px;">Primary Patient</h2>';
   h += ptSection('Name', (data.fname || '') + ' ' + (data.lname || ''));
+  h += ptSection('Date of Birth', data.dob);
   h += ptSection('Email', data.email);
   h += ptSection('Phone', data.phone);
   h += ptSection('Address', addr);
@@ -152,10 +155,11 @@ function buildBusinessEmailHtml(data) {
   var cl = { treatment: 'Treatment Consent', hipaa: 'HIPAA Privacy', medical: 'Medical Release', financial: 'Financial Agreement' };
   ['treatment', 'hipaa', 'medical', 'financial'].forEach(function (k) {
     var agreed = data.consents && data.consents[k];
-    var sig = data.consentSignatures && data.consentSignatures[k];
-    var sigTxt = sig ? (sig.type === 'typed' ? 'Typed: ' + sig.text : 'Drawn signature (image in IntakeQ files)') : 'No signature';
-    h += '<p>' + (agreed ? '✅' : '❌') + ' <strong style="color:#D4BC82;">' + cl[k] + ':</strong> ' + (agreed ? 'AGREED' : 'NOT AGREED') + ' — ' + sigTxt + '</p>';
+    h += '<p>' + (agreed ? '✅' : '❌') + ' <strong style="color:#D4BC82;">' + cl[k] + ':</strong> ' + (agreed ? 'AGREED' : 'NOT AGREED') + '</p>';
   });
+  var cSig = data.consentFormSignature;
+  var sigDesc = cSig ? (cSig.type === 'typed' ? 'Typed: ' + cSig.text : 'Drawn signature (image in IntakeQ files)') : 'Not provided';
+  h += ptSection('Consent Signature', sigDesc);
   h += ptSection('Overall E-Signature', data.signature ? 'Provided' : 'Not provided');
   h += ptSection('Intake Acknowledgment', data.intakeAcknowledged ? 'Acknowledged' : 'Not acknowledged');
   h += '</div>';
@@ -172,6 +176,8 @@ function buildBusinessEmailHtml(data) {
     data.additionalPatients.forEach(function (pt, idx) {
       h += '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;margin-top:12px;">';
       h += '<h3 style="color:#D4BC82;font-size:14px;margin:0 0 8px;">Patient ' + (idx + 2) + ': ' + (pt.fname || '') + ' ' + (pt.lname || '') + '</h3>';
+      h += ptSection('Date of Birth', pt.dob);
+      h += ptSection('Phone', pt.phone);
       var pa = formatAddress(pt);
       if (pa && pa !== 'Not specified') h += ptSection('Address', pa);
       h += ptSection('Services', pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary');
@@ -225,6 +231,8 @@ function buildPatientEmailHtml(data) {
     data.additionalPatients.forEach(function (pt, idx) {
       h += '<div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;margin-top:12px;">';
       h += '<h3 style="color:#D4BC82;font-size:14px;margin:0 0 8px;">Patient ' + (idx + 2) + ': ' + (pt.fname || '') + ' ' + (pt.lname || '') + '</h3>';
+      h += ptSection('Date of Birth', pt.dob);
+      h += ptSection('Phone', pt.phone);
       var pa = formatAddress(pt);
       if (pa && pa !== 'Not specified') h += ptSection('Address', pa);
       h += ptSection('Services', pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary');
@@ -303,14 +311,15 @@ export default async function handler(req, res) {
 
       addQ('First Name', data.fname, 'Personal Information');
       addQ('Last Name', data.lname, 'Personal Information');
+      addQ('Date of Birth', data.dob, 'Personal Information');
       addQ('Email', data.email, 'Personal Information');
       addQ('Phone', data.phone, 'Personal Information');
       addQ('Address Line 1', data.address1, 'Personal Information');
       addQ('Address Line 2', data.address2, 'Personal Information');
       addQ('City', data.city, 'Personal Information');
-      addQ('State', data.state, 'Personal Information');
+      addQ('State / Province / Region', data.stateProvince || data.state, 'Personal Information');
       addQ('Country', data.country, 'Personal Information');
-      addQ('Zip Code', data.zipCode, 'Personal Information');
+      addQ('Postal / Zip Code', data.postalCode || data.zipCode, 'Personal Information');
       addQ('Preferred Date', data.date, 'Appointment');
       addQ('Preferred Time', data.selTime, 'Appointment');
       addQ('Services', data.services ? data.services.join(', ') : '', 'Appointment');
@@ -326,13 +335,9 @@ export default async function handler(req, res) {
       addQ('Medical Release', data.consents && data.consents.medical ? 'Agreed' : 'Not Agreed', 'Consents');
       addQ('Financial Agreement', data.consents && data.consents.financial ? 'Agreed' : 'Not Agreed', 'Consents');
 
-      // Per-consent signature records
-      if (data.consentSignatures) {
-        var sl = { treatment: 'Treatment', hipaa: 'HIPAA', medical: 'Medical Release', financial: 'Financial' };
-        Object.keys(data.consentSignatures).forEach(function (k) {
-          var sig = data.consentSignatures[k];
-          if (sig) addQ(sl[k] + ' Consent Signature', sig.type === 'typed' ? 'Typed: ' + sig.text : 'Drawn (image in Files)', 'Consent Signatures');
-        });
+      // Consent signature (single signature for all consents)
+      if (data.consentFormSignature) {
+        addQ('Consent Forms Signature', data.consentFormSignature.type === 'typed' ? 'Typed: ' + data.consentFormSignature.text : 'Drawn (image in Files)', 'Consent Signatures');
       }
 
       addQ('E-Signature', data.signature ? 'Provided' : 'Not Provided', 'Consents');
@@ -346,6 +351,8 @@ export default async function handler(req, res) {
         data.additionalPatients.forEach(function (pt, idx) {
           var p = 'Patient ' + (idx + 2);
           addQ(p + ' — Name', (pt.fname || '') + ' ' + (pt.lname || ''), 'Additional Patients');
+          addQ(p + ' — Date of Birth', pt.dob, 'Additional Patients');
+          addQ(p + ' — Phone', pt.phone, 'Additional Patients');
           addQ(p + ' — Address', formatAddress(pt), 'Additional Patients');
           addQ(p + ' — Services', pt.services ? pt.services.join(', ') : '', 'Additional Patients');
           addQ(p + ' — Medical/Surgical History', pt.medicalSurgicalHistory, 'Additional Patients');
@@ -364,17 +371,8 @@ export default async function handler(req, res) {
 
     // ── 3. Upload consent signature images to IntakeQ Files ──
     if (clientId) {
-      var sigFiles = { treatment: 'Treatment_Consent_Sig', hipaa: 'HIPAA_Consent_Sig', medical: 'Medical_Release_Sig', financial: 'Financial_Agreement_Sig' };
-      if (data.consentSignatures) {
-        for (var sk of Object.keys(data.consentSignatures)) {
-          var s = data.consentSignatures[sk];
-          if (s && s.type === 'drawn' && s.image) {
-            try { await uploadBase64Image(clientId, sigFiles[sk] + '.png', s.image); } catch (e) { console.error('Sig upload ' + sk + ':', e.message); }
-          }
-        }
-      }
       if (data.consentFormSignature && data.consentFormSignature.type === 'drawn' && data.consentFormSignature.image) {
-        try { await uploadBase64Image(clientId, 'Overall_Consent_Signature.png', data.consentFormSignature.image); } catch (e) { console.error('Overall sig upload:', e.message); }
+        try { await uploadBase64Image(clientId, 'Consent_Forms_Signature.png', data.consentFormSignature.image); } catch (e) { console.error('Consent sig upload:', e.message); }
       }
       if (data.intakeSignatureImage && data.intakeSignatureImage.type === 'drawn' && data.intakeSignatureImage.image) {
         try { await uploadBase64Image(clientId, 'Intake_Acknowledgment_Sig.png', data.intakeSignatureImage.image); } catch (e) { console.error('Intake sig upload:', e.message); }
