@@ -46,6 +46,31 @@ async function uploadBase64Image(clientId, fileName, base64Data) {
   }
 }
 
+async function uploadTextFile(clientId, fileName, textContent) {
+  var apiKey = process.env.INTAKEQ_API_KEY;
+  if (!apiKey || !clientId || !textContent) return false;
+  try {
+    var boundary = '----FormBoundary' + Date.now();
+    var contentBuf = Buffer.from(textContent, 'utf-8');
+    var header = '--' + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="' + fileName + '"\r\nContent-Type: text/plain\r\n\r\n';
+    var footer = '\r\n--' + boundary + '--\r\n';
+    var headerBuf = Buffer.from(header, 'utf-8');
+    var footerBuf = Buffer.from(footer, 'utf-8');
+    var fullBody = Buffer.concat([headerBuf, contentBuf, footerBuf]);
+
+    var resp = await fetch(INTAKEQ_API_BASE + '/files/' + clientId, {
+      method: 'POST',
+      headers: { 'X-Auth-Key': apiKey, 'Content-Type': 'multipart/form-data; boundary=' + boundary },
+      body: fullBody,
+    });
+    console.log('[Upload] ' + fileName + ': ' + resp.status);
+    return resp.ok;
+  } catch (e) {
+    console.error('[Upload] Error for ' + fileName + ':', e.message);
+    return false;
+  }
+}
+
 function formatAddress(d) {
   var parts = [];
   if (d.address1) parts.push(d.address1);
@@ -65,60 +90,144 @@ function buildConsentSummary(consents) {
   return items.join('\n');
 }
 
-function buildPatientNotes(data) {
-  var s = [];
-  s.push('=== APPOINTMENT DETAILS ===');
-  s.push('Date: ' + (data.date || 'Not specified'));
-  s.push('Time: ' + (data.selTime || 'Not specified'));
-  s.push('Services: ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General Consultation'));
-  s.push('Address: ' + formatAddress(data));
-  if (data.notes) s.push('Notes: ' + data.notes);
+function buildIntakeDocument(data) {
+  var now = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  var lines = [];
 
-  s.push('\n=== PATIENT INFO ===');
-  if (data.dob) s.push('Date of Birth: ' + data.dob);
+  lines.push('================================================================');
+  lines.push('       HEALING SOULUTIONS — PATIENT INTAKE RECORD');
+  lines.push('================================================================');
+  lines.push('Submitted: ' + now + ' (Eastern)');
+  lines.push('');
 
-  s.push('\n=== MEDICAL INFORMATION ===');
-  if (data.medicalSurgicalHistory) s.push('Medical/Surgical History: ' + data.medicalSurgicalHistory);
-  if (data.medications) s.push('Medications: ' + data.medications);
-  if (data.allergies) s.push('Allergies: ' + data.allergies);
-  if (data.ivReactions) s.push('Previous IV Therapy Reactions: ' + data.ivReactions);
-  if (data.clinicianNotes) s.push('Clinician Notes: ' + data.clinicianNotes);
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  PATIENT INFORMATION');
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('Name:              ' + (data.fname || '') + ' ' + (data.lname || ''));
+  lines.push('Date of Birth:     ' + (data.dob || 'Not provided'));
+  lines.push('Email:             ' + (data.email || 'Not provided'));
+  lines.push('Phone:             ' + (data.phone || 'Not provided'));
+  lines.push('Address Line 1:    ' + (data.address1 || 'Not provided'));
+  if (data.address2) lines.push('Address Line 2:    ' + data.address2);
+  lines.push('City:              ' + (data.city || 'Not provided'));
+  lines.push('State/Province:    ' + (data.stateProvince || data.state || 'Not provided'));
+  lines.push('Country:           ' + (data.country || 'Not provided'));
+  lines.push('Postal/Zip Code:   ' + (data.postalCode || data.zipCode || 'Not provided'));
+  lines.push('');
 
-  s.push('\n=== CONSENT STATUS ===');
-  s.push(buildConsentSummary(data.consents || {}));
-  s.push('E-Signature: ' + (data.signature === 'drawn-signature' ? 'DRAWN SIGNATURE ON FILE' : (data.signature ? 'Typed: ' + data.signature : 'NOT PROVIDED')));
-  s.push('Intake Acknowledgment: ' + (data.intakeAcknowledged ? 'ACKNOWLEDGED' : 'NOT ACKNOWLEDGED'));
-  if (data.intakeSignatureImage) {
-    s.push('Intake Signature: ' + (data.intakeSignatureImage.type === 'typed' ? 'Typed — ' + data.intakeSignatureImage.text : 'Drawn — image attached'));
-  }
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  APPOINTMENT DETAILS');
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('Date:              ' + (data.date || 'TBD'));
+  lines.push('Time:              ' + (data.selTime || 'TBD'));
+  lines.push('Services:          ' + (data.services && data.services.length > 0 ? data.services.join(', ') : 'General Consultation'));
+  if (data.notes) lines.push('Patient Notes:     ' + data.notes);
+  lines.push('');
 
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  MEDICAL INFORMATION');
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('Medical/Surgical History:');
+  lines.push('  ' + (data.medicalSurgicalHistory || 'None reported'));
+  lines.push('');
+  lines.push('Current Medications/Supplements:');
+  lines.push('  ' + (data.medications || 'None reported'));
+  lines.push('');
+  lines.push('Allergies:');
+  lines.push('  ' + (data.allergies || 'None reported'));
+  lines.push('');
+  lines.push('Previous IV Therapy Reactions:');
+  lines.push('  ' + (data.ivReactions || 'None reported'));
+  lines.push('');
+  lines.push('Notes for Clinician:');
+  lines.push('  ' + (data.clinicianNotes || 'None'));
+  lines.push('');
+
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  CONSENT FORMS');
+  lines.push('────────────────────────────────────────────────────────────────');
+  var consents = data.consents || {};
+  lines.push('Treatment Consent:      ' + (consents.treatment ? 'AGREED' : 'NOT AGREED'));
+  lines.push('HIPAA Privacy:          ' + (consents.hipaa ? 'AGREED' : 'NOT AGREED'));
+  lines.push('Medical History Release: ' + (consents.medical ? 'AGREED' : 'NOT AGREED'));
+  lines.push('Financial Agreement:     ' + (consents.financial ? 'AGREED' : 'NOT AGREED'));
+  lines.push('');
+
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  SIGNATURES');
+  lines.push('────────────────────────────────────────────────────────────────');
   if (data.consentFormSignature) {
-    s.push('\n=== CONSENT SIGNATURE ===');
     var cSig = data.consentFormSignature;
-    s.push('Signature: ' + (cSig.type === 'typed' ? 'Typed — ' + cSig.text : 'Drawn — image attached'));
+    if (cSig.type === 'typed') {
+      lines.push('Consent Signature:     Typed — "' + cSig.text + '"');
+    } else {
+      lines.push('Consent Signature:     Drawn — see Consent_Forms_Signature.png');
+    }
+  } else {
+    lines.push('Consent Signature:     Not provided');
   }
 
-  s.push('\n=== PAYMENT ===');
-  s.push('Card: ' + (data.cardBrand || 'N/A') + ' ending ' + (data.cardLast4 || 'N/A'));
-  s.push('Stripe ID: ' + (data.stripePaymentMethodId || 'N/A'));
+  if (data.intakeSignatureImage) {
+    var iSig = data.intakeSignatureImage;
+    if (iSig.type === 'typed') {
+      lines.push('Intake Signature:      Typed — "' + iSig.text + '"');
+    } else {
+      lines.push('Intake Signature:      Drawn — see Intake_Acknowledgment_Sig.png');
+    }
+  } else {
+    lines.push('Intake Signature:      Not provided');
+  }
+
+  var eSig = data.signature;
+  if (eSig === 'drawn-signature') {
+    lines.push('E-Signature:           Drawn signature on file');
+  } else if (eSig) {
+    lines.push('E-Signature:           Typed — "' + eSig + '"');
+  } else {
+    lines.push('E-Signature:           Not provided');
+  }
+  lines.push('Intake Acknowledged:   ' + (data.intakeAcknowledged ? 'YES' : 'NO'));
+  lines.push('');
+
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('  PAYMENT VERIFICATION');
+  lines.push('────────────────────────────────────────────────────────────────');
+  lines.push('Cardholder:        ' + (data.cardHolderName || 'Not provided'));
+  lines.push('Card:              ' + (data.cardBrand || 'N/A') + ' ending in ' + (data.cardLast4 || 'N/A'));
+  lines.push('Stripe ID:         ' + (data.stripePaymentMethodId || 'N/A'));
+  lines.push('');
 
   if (data.additionalPatients && data.additionalPatients.length > 0) {
-    s.push('\n=== ADDITIONAL PATIENTS ===');
+    lines.push('────────────────────────────────────────────────────────────────');
+    lines.push('  ADDITIONAL PATIENTS (' + data.additionalPatients.length + ')');
+    lines.push('────────────────────────────────────────────────────────────────');
     data.additionalPatients.forEach(function (pt, idx) {
-      s.push('\n--- Patient ' + (idx + 2) + ' ---');
-      s.push('Name: ' + (pt.fname || '') + ' ' + (pt.lname || ''));
-      if (pt.dob) s.push('Date of Birth: ' + pt.dob);
-      if (pt.phone) s.push('Phone: ' + pt.phone);
-      s.push('Address: ' + formatAddress(pt));
-      s.push('Services: ' + (pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary'));
-      if (pt.medicalSurgicalHistory) s.push('Medical/Surgical History: ' + pt.medicalSurgicalHistory);
-      if (pt.medications) s.push('Medications: ' + pt.medications);
-      if (pt.allergies) s.push('Allergies: ' + pt.allergies);
-      if (pt.ivReactions) s.push('IV Reactions: ' + pt.ivReactions);
-      if (pt.clinicianNotes) s.push('Clinician Notes: ' + pt.clinicianNotes);
+      lines.push('');
+      lines.push('--- Patient ' + (idx + 2) + ' ---');
+      lines.push('Name:              ' + (pt.fname || '') + ' ' + (pt.lname || ''));
+      if (pt.dob) lines.push('Date of Birth:     ' + pt.dob);
+      if (pt.phone) lines.push('Phone:             ' + pt.phone);
+      if (pt.address1) lines.push('Address Line 1:    ' + pt.address1);
+      if (pt.address2) lines.push('Address Line 2:    ' + pt.address2);
+      if (pt.city) lines.push('City:              ' + pt.city);
+      if (pt.stateProvince) lines.push('State/Province:    ' + pt.stateProvince);
+      if (pt.country) lines.push('Country:           ' + pt.country);
+      if (pt.postalCode) lines.push('Postal/Zip Code:   ' + pt.postalCode);
+      lines.push('Services:          ' + (pt.services && pt.services.length > 0 ? pt.services.join(', ') : 'Same as primary'));
+      if (pt.medicalSurgicalHistory) lines.push('Medical/Surgical:  ' + pt.medicalSurgicalHistory);
+      if (pt.medications) lines.push('Medications:       ' + pt.medications);
+      if (pt.allergies) lines.push('Allergies:         ' + pt.allergies);
+      if (pt.ivReactions) lines.push('IV Reactions:      ' + pt.ivReactions);
+      if (pt.clinicianNotes) lines.push('Clinician Notes:   ' + pt.clinicianNotes);
     });
+    lines.push('');
   }
-  return s.join('\n');
+
+  lines.push('================================================================');
+  lines.push('  END OF INTAKE RECORD');
+  lines.push('================================================================');
+
+  return lines.join('\n');
 }
 
 function ptSection(label, val) {
@@ -299,10 +408,17 @@ export default async function handler(req, res) {
     try {
       var existingClients = await intakeqRequest('/clients?search=' + encodeURIComponent(data.email) + '&IncludeProfile=true', 'GET');
       var clientPayload = {
-        FirstName: data.fname, LastName: data.lname, Email: data.email,
-        Phone: data.phone || '', Address: formatAddress(data),
+        FirstName: data.fname,
+        LastName: data.lname,
+        Email: data.email,
+        Phone: data.phone || '',
         DateOfBirth: data.dob || '',
-        Notes: buildPatientNotes(data),
+        Address: data.address1 || '',
+        City: data.city || '',
+        State: data.stateProvince || data.state || '',
+        ZipCode: data.postalCode || data.zipCode || '',
+        Country: data.country || '',
+        PractitionerId: '699328a73f048c95babc42b6',
       };
       if (Array.isArray(existingClients) && existingClients.length > 0) {
         clientId = existingClients[0].ClientId || existingClients[0].Id;
@@ -320,86 +436,23 @@ export default async function handler(req, res) {
       errors.push('client: ' + e.message);
     }
 
-    // ── 2. Submit intake questions ──
-    try {
-      var payload = {
-        QuestionnaireId: '69a277ecc252c3dd4d1aa452',
-        PractitionerId: '699328a73f048c95babc42b6',
-        ClientId: clientId || undefined,
-        ClientName: data.fname + ' ' + data.lname,
-        ClientEmail: data.email,
-        ClientPhone: data.phone || '',
-        Status: 'Submitted',
-        DateCreated: new Date().toISOString(),
-        Questions: [],
-      };
-      var addQ = function (text, answer, cat) {
-        if (answer) payload.Questions.push({ Text: text, Answer: String(answer), Category: cat || 'General' });
-      };
-
-      addQ('First Name', data.fname, 'Personal Information');
-      addQ('Last Name', data.lname, 'Personal Information');
-      addQ('Date of Birth', data.dob, 'Personal Information');
-      addQ('Email', data.email, 'Personal Information');
-      addQ('Phone', data.phone, 'Personal Information');
-      addQ('Address Line 1', data.address1, 'Personal Information');
-      addQ('Address Line 2', data.address2, 'Personal Information');
-      addQ('City', data.city, 'Personal Information');
-      addQ('State / Province / Region', data.stateProvince || data.state, 'Personal Information');
-      addQ('Country', data.country, 'Personal Information');
-      addQ('Postal / Zip Code', data.postalCode || data.zipCode, 'Personal Information');
-      addQ('Preferred Date', data.date, 'Appointment');
-      addQ('Preferred Time', data.selTime, 'Appointment');
-      addQ('Services', data.services ? data.services.join(', ') : '', 'Appointment');
-      addQ('Additional Notes', data.notes, 'Appointment');
-      addQ('Medical / Surgical History', data.medicalSurgicalHistory, 'Medical');
-      addQ('Current Medications', data.medications, 'Medical');
-      addQ('Allergies', data.allergies, 'Medical');
-      addQ('Previous IV Therapy Reactions', data.ivReactions, 'Medical');
-      addQ('Notes for Clinician', data.clinicianNotes, 'Medical');
-
-      addQ('Treatment Consent', data.consents && data.consents.treatment ? 'Agreed' : 'Not Agreed', 'Consents');
-      addQ('HIPAA Privacy', data.consents && data.consents.hipaa ? 'Agreed' : 'Not Agreed', 'Consents');
-      addQ('Medical Release', data.consents && data.consents.medical ? 'Agreed' : 'Not Agreed', 'Consents');
-      addQ('Financial Agreement', data.consents && data.consents.financial ? 'Agreed' : 'Not Agreed', 'Consents');
-
-      // Consent signature (single signature for all consents)
-      if (data.consentFormSignature) {
-        addQ('Consent Forms Signature', data.consentFormSignature.type === 'typed' ? 'Typed: ' + data.consentFormSignature.text : 'Drawn (image in Files)', 'Consent Signatures');
+    // ── 2. Upload complete intake document to IntakeQ Files ──
+    if (clientId) {
+      try {
+        var intakeDoc = buildIntakeDocument(data);
+        var dateStr = new Date().toISOString().slice(0, 10);
+        var fileName = 'Intake_' + data.fname + '_' + data.lname + '_' + dateStr + '.txt';
+        var uploaded = await uploadTextFile(clientId, fileName, intakeDoc);
+        if (uploaded) {
+          console.log('[IntakeQ] Intake document uploaded to Files:', fileName);
+        } else {
+          console.error('[IntakeQ] Intake document upload returned not ok');
+          errors.push('intake_doc: upload failed');
+        }
+      } catch (e) {
+        console.error('Intake doc upload error:', e.message);
+        errors.push('intake_doc: ' + e.message);
       }
-
-      addQ('E-Signature', data.signature === 'drawn-signature' ? 'Drawn signature on file' : (data.signature || 'Not Provided'), 'Consents');
-      addQ('Intake Acknowledgment', data.intakeAcknowledged ? 'Acknowledged' : 'Not Acknowledged', 'Consents');
-      if (data.intakeSignatureImage) {
-        addQ('Intake Acknowledgment Signature', data.intakeSignatureImage.type === 'typed' ? 'Typed: ' + data.intakeSignatureImage.text : 'Drawn (image in Files)', 'Consents');
-      }
-      addQ('Card Brand', data.cardBrand, 'Payment');
-      addQ('Card Last 4', data.cardLast4, 'Payment');
-      addQ('Stripe ID', data.stripePaymentMethodId, 'Payment');
-      addQ('Cardholder', data.cardHolderName, 'Payment');
-
-      if (data.additionalPatients && data.additionalPatients.length > 0) {
-        data.additionalPatients.forEach(function (pt, idx) {
-          var p = 'Patient ' + (idx + 2);
-          addQ(p + ' — Name', (pt.fname || '') + ' ' + (pt.lname || ''), 'Additional Patients');
-          addQ(p + ' — Date of Birth', pt.dob, 'Additional Patients');
-          addQ(p + ' — Phone', pt.phone, 'Additional Patients');
-          addQ(p + ' — Address', formatAddress(pt), 'Additional Patients');
-          addQ(p + ' — Services', pt.services ? pt.services.join(', ') : '', 'Additional Patients');
-          addQ(p + ' — Medical/Surgical History', pt.medicalSurgicalHistory, 'Additional Patients');
-          addQ(p + ' — Medications', pt.medications, 'Additional Patients');
-          addQ(p + ' — Allergies', pt.allergies, 'Additional Patients');
-          addQ(p + ' — IV Reactions', pt.ivReactions, 'Additional Patients');
-          addQ(p + ' — Clinician Notes', pt.clinicianNotes, 'Additional Patients');
-        });
-      }
-
-      console.log('[IntakeQ] Submitting intake with', payload.Questions.length, 'questions for client', clientId);
-      await intakeqRequest('/intakes/send', 'POST', payload);
-      console.log('[IntakeQ] Intake submitted successfully');
-    } catch (e) {
-      console.error('Intake error:', e.message);
-      errors.push('intake: ' + e.message);
     }
 
     // ── 3. Upload consent signature images to IntakeQ Files ──
