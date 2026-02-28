@@ -1,40 +1,183 @@
 // test-intakeq.js — Deploy to: pages/api/test-intakeq.js
-// REPLACE the old test-intakeq.js with this one
-// Focused test: does /intakes/send with pre-filled Questions actually save answers?
+// DELETE old file contents first, paste this
 
 module.exports = async function handler(req, res) {
-  const API_KEY = process.env.INTAKEQ_API_KEY;
-  const BASE = 'https://intakeq.com/api/v1';
-  const PRACTITIONER_ID = '699328a73f048c95babc42b6';
-  const QUESTIONNAIRE_ID = '69a277ecc252c3dd4d1aa452';
-
-  const results = {};
-
-  async function iq(path, method = 'GET', body = null) {
-    const opts = {
-      method,
-      headers: { 'X-Auth-Key': API_KEY, 'Content-Type': 'application/json' },
-    };
-    if (body) opts.body = JSON.stringify(body);
-    try {
-      const r = await fetch(`${BASE}${path}`, opts);
-      const text = await r.text();
-      let json = null;
-      try { json = JSON.parse(text); } catch (_) {}
-      return { status: r.status, ok: r.ok, data: json || text };
-    } catch (e) {
-      return { status: 'ERROR', error: e.message };
-    }
-  }
-
-  // STEP 1: Create a FRESH test client (unique email so /intakes/send won't reject as duplicate)
-  const uniqueId = Date.now();
-  const testEmail = `diag-${uniqueId}@healingsoulutions.care`;
-  let clientId = null;
-
   try {
-    const r = await iq('/clients', 'POST', {
+    var API_KEY = process.env.INTAKEQ_API_KEY;
+    var BASE = 'https://intakeq.com/api/v1';
+    var PRACTITIONER_ID = '699328a73f048c95babc42b6';
+    var QUESTIONNAIRE_ID = '69a277ecc252c3dd4d1aa452';
+    var results = {};
+
+    async function iq(path, method, body) {
+      var opts = {
+        method: method || 'GET',
+        headers: { 'X-Auth-Key': API_KEY, 'Content-Type': 'application/json' },
+      };
+      if (body) opts.body = JSON.stringify(body);
+      var r = await fetch(BASE + path, opts);
+      var text = await r.text();
+      var json = null;
+      try { json = JSON.parse(text); } catch (e) {}
+      return { status: r.status, ok: r.ok, data: json || text };
+    }
+
+    // 1: Create fresh client
+    var uniqueId = Date.now();
+    var testEmail = 'diag-' + uniqueId + '@healingsoulutions.care';
+    var clientId = null;
+
+    var r1 = await iq('/clients', 'POST', {
       FirstName: 'DiagTest',
+      LastName: 'Prefilled',
+      Email: testEmail,
+      PhoneNumber: '+15857472215',
+      DateOfBirth: '1985-06-20',
+      Address: '456 Diagnostic Ave',
+      City: 'Rochester',
+      State: 'NY',
+      ZipCode: '14620',
+      Country: 'US',
+      PractitionerId: PRACTITIONER_ID,
+    });
+    if (r1.ok && r1.data) {
+      clientId = r1.data.ClientId || r1.data.Id || null;
+    }
+    results['1_client'] = { status: r1.status, clientId: clientId, email: testEmail };
+
+    // 2: Send intake with pre-filled answers
+    var intakeId = null;
+    if (clientId) {
+      var r2 = await iq('/intakes/send', 'POST', {
+        QuestionnaireId: QUESTIONNAIRE_ID,
+        PractitionerId: PRACTITIONER_ID,
+        ClientId: clientId,
+        ClientEmail: testEmail,
+        ClientName: 'DiagTest Prefilled',
+        Questions: [
+          { Id: 'kj1o-1', Text: 'First name', Answer: 'DiagTest', QuestionType: 'OpenQuestion' },
+          { Id: 'oj9c-1', Text: 'Last name', Answer: 'Prefilled', QuestionType: 'OpenQuestion' },
+          { Id: '9r2z-1', Text: 'Date of birth', Answer: '06/20/1985', QuestionType: 'OpenQuestion' },
+          { Id: '9lt7-1', Text: 'Email', Answer: testEmail, QuestionType: 'OpenQuestion' },
+          { Id: '8mqt-1', Text: 'Phone', Answer: '+1 (585) 747-2215', QuestionType: 'OpenQuestion' },
+          { Id: 'jhym-1', Text: 'Address line 1', Answer: '456 Diagnostic Ave', QuestionType: 'OpenQuestion' },
+          { Id: 'wt5a-1', Text: 'Address line 2', Answer: 'Suite 200', QuestionType: 'OpenQuestion' },
+          { Id: '9uoi-1', Text: 'State', Answer: 'NY', QuestionType: 'OpenQuestion' },
+          { Id: 'lp5z-1', Text: 'Zipcode', Answer: '14620', QuestionType: 'OpenQuestion' },
+          { Id: 'jo66-1', Text: 'Medical/surgical history', Answer: 'DIAG: Appendectomy 2010, Tonsillectomy 2005', QuestionType: 'OpenQuestion' },
+          { Id: 'gkmh-1', Text: 'Current medication/supplements', Answer: 'DIAG: Lisinopril 10mg, Vitamin D', QuestionType: 'OpenQuestion' },
+          { Id: 'elrp-1', Text: 'Allergies', Answer: 'DIAG: Penicillin, Sulfa', QuestionType: 'OpenQuestion' },
+          { Id: 'abjd-1', Text: 'Previous reaction to IV therapy?', Answer: 'DIAG: None', QuestionType: 'OpenQuestion' },
+          { Id: 'andp-1', Text: 'Additional notes for clinician', Answer: 'DIAG TEST - please ignore', QuestionType: 'OpenQuestion' },
+          { Id: 'uvgy-1', Text: 'Additional notes', Answer: 'DIAG: Appointment Feb 28 3PM', QuestionType: 'OpenQuestion' },
+          { Id: 'knxl-1', Text: 'Appointment details', Answer: 'Feb 28, 2026 | 3:00 PM | IV Hydration', QuestionType: 'OpenQuestion' },
+          { Id: 't06w-1', Text: 'Consent status', Answer: 'Treatment: AGREED | HIPAA: AGREED | Medical: AGREED | Financial: AGREED', QuestionType: 'OpenQuestion' },
+          { Id: 'ns11-1', Text: 'Signatures and payment', Answer: 'Signature: DiagTest Prefilled (typed) | Payment: Visa 4242', QuestionType: 'OpenQuestion' },
+        ],
+      });
+
+      intakeId = (r2.data && r2.data.Id) ? r2.data.Id : null;
+      var questions = (r2.data && r2.data.Questions) ? r2.data.Questions : [];
+      var withAnswers = [];
+      for (var i = 0; i < questions.length; i++) {
+        if (questions[i].Answer !== null && questions[i].Answer !== '') {
+          withAnswers.push(questions[i]);
+        }
+      }
+
+      var answersList = [];
+      for (var j = 0; j < questions.length; j++) {
+        answersList.push({ id: questions[j].Id, text: questions[j].Text, answer: questions[j].Answer });
+      }
+
+      results['2_intake_send'] = {
+        status: r2.status,
+        ok: r2.ok,
+        intakeId: intakeId,
+        intakeStatus: r2.data ? r2.data.Status : null,
+        intakeUrl: r2.data ? r2.data.Url : null,
+        totalQuestions: questions.length,
+        questionsWithAnswers: withAnswers.length,
+        answers: answersList,
+      };
+    }
+
+    // 3: Read it back
+    if (intakeId) {
+      var r3 = await iq('/intakes/' + intakeId);
+      var q3 = (r3.data && r3.data.Questions) ? r3.data.Questions : [];
+      var filled3 = [];
+      for (var k = 0; k < q3.length; k++) {
+        if (q3[k].Answer !== null && q3[k].Answer !== '') filled3.push(q3[k]);
+      }
+      var answers3 = [];
+      for (var m = 0; m < q3.length; m++) {
+        answers3.push({ id: q3[m].Id, text: q3[m].Text, answer: q3[m].Answer });
+      }
+      results['3_read_back'] = {
+        status: r3.status,
+        intakeStatus: r3.data ? r3.data.Status : null,
+        totalQuestions: q3.length,
+        questionsWithAnswers: filled3.length,
+        answers: answers3,
+      };
+    }
+
+    // 4: Try marking complete
+    if (intakeId) {
+      var r4 = await iq('/intakes/' + intakeId, 'POST', {
+        Id: intakeId,
+        Status: 'Completed',
+      });
+      results['4_mark_complete'] = {
+        status: r4.status,
+        ok: r4.ok,
+        response: r4.data,
+      };
+    }
+
+    // 5: File upload
+    if (clientId) {
+      var tinyPNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+      var boundary = '----SigTest' + uniqueId;
+      var imgBuf = Buffer.from(tinyPNG, 'base64');
+      var part1 = Buffer.from('--' + boundary + '\r\nContent-Disposition: form-data; name="file"; filename="DiagTest_Sig.png"\r\nContent-Type: image/png\r\n\r\n');
+      var part2 = imgBuf;
+      var part3 = Buffer.from('\r\n--' + boundary + '--\r\n');
+      var uploadBody = Buffer.concat([part1, part2, part3]);
+
+      var r5 = await fetch(BASE + '/files/' + clientId, {
+        method: 'POST',
+        headers: {
+          'X-Auth-Key': API_KEY,
+          'Content-Type': 'multipart/form-data; boundary=' + boundary,
+        },
+        body: uploadBody,
+      });
+      results['5_file_upload'] = { status: r5.status, ok: r5.ok };
+    }
+
+    // Summary
+    results['SUMMARY'] = {
+      clientId: clientId,
+      intakeId: intakeId || 'FAILED',
+      answersInResponse: results['2_intake_send'] ? results['2_intake_send'].questionsWithAnswers : 0,
+      answersOnReRead: results['3_read_back'] ? results['3_read_back'].questionsWithAnswers : 'N/A',
+      markCompleteStatus: results['4_mark_complete'] ? results['4_mark_complete'].status : 'N/A',
+      fileUpload: results['5_file_upload'] ? results['5_file_upload'].ok : false,
+      CHECK_DASHBOARD: 'Look in IntakeQ Intakes tab for DiagTest Prefilled',
+    };
+
+    return res.status(200).json(results);
+
+  } catch (err) {
+    return res.status(200).json({
+      CRASHED: true,
+      error: err.message,
+      stack: err.stack,
+    });
+  }
+};      FirstName: 'DiagTest',
       LastName: 'Prefilled',
       Email: testEmail,
       PhoneNumber: '+15857472215',
