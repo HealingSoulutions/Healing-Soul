@@ -1,6 +1,6 @@
 import https from 'https';
 
-const INTAKEQ_API_BASE = 'https://intakeq.com/api/v1';
+var CODE_VERSION = 'v3-https-2026-02-28';
 
 function intakeqRequest(endpoint, method, body) {
   return new Promise(function(resolve, reject) {
@@ -14,12 +14,15 @@ function intakeqRequest(endpoint, method, body) {
       headers: { 'X-Auth-Key': apiKey, 'Content-Type': 'application/json' }
     };
 
+    console.log('[IntakeQ] Request: ' + opts.method + ' ' + opts.path);
+
     var req = https.request(opts, function(resp) {
       var data = '';
       resp.on('data', function(chunk) { data += chunk; });
       resp.on('end', function() {
+        console.log('[IntakeQ] Response: ' + resp.statusCode + ' from ' + opts.path);
         if (resp.statusCode < 200 || resp.statusCode >= 300) {
-          console.error('[IntakeQ] API error [' + resp.statusCode + ']:', data);
+          console.error('[IntakeQ] Error body:', data.substring(0, 500));
           reject(new Error('IntakeQ API error: ' + resp.statusCode));
           return;
         }
@@ -30,7 +33,7 @@ function intakeqRequest(endpoint, method, body) {
     });
 
     req.on('error', function(e) {
-      console.error('[IntakeQ] Request error:', e.message);
+      console.error('[IntakeQ] Connection error:', e.message);
       reject(e);
     });
 
@@ -59,6 +62,8 @@ function uploadFileToIntakeQ(clientId, fileName, contentBuffer, contentType) {
         'Content-Length': fullBody.length
       }
     };
+
+    console.log('[Upload] Sending ' + fileName + ' (' + fullBody.length + ' bytes) to client ' + clientId);
 
     var req = https.request(opts, function(resp) {
       var data = '';
@@ -390,6 +395,11 @@ function buildPatientEmailHtml(data) {
 }
 
 export default async function handler(req, res) {
+  // Version check — visit with GET to confirm which code is deployed
+  if (req.method === 'GET') {
+    return res.status(200).json({ version: CODE_VERSION, status: 'submit-intake is live' });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -457,6 +467,7 @@ export default async function handler(req, res) {
       }
     } else {
       console.error('[IntakeQ] Skipping file uploads — no clientId');
+      errors.push('no_client: could not create client, skipping file uploads');
     }
 
     // ── 3. Upload signature images to IntakeQ Files ──
@@ -521,17 +532,17 @@ export default async function handler(req, res) {
       errors.push('patientEmail: ' + e.message);
     }
 
-    console.log('[Booking] Complete: ' + data.fname + ' ' + data.lname + ' (' + data.email + ') clientId=' + clientId);
-    if (errors.length > 0) console.warn('[Booking] Errors:', errors.join('; '));
+    console.log('[Booking] Complete: ' + data.fname + ' ' + data.lname + ' clientId=' + (clientId || 'NONE') + ' errors=' + errors.length);
 
     return res.status(200).json({
       success: true,
+      version: CODE_VERSION,
       clientId: clientId || null,
-      errors: errors.length > 0 ? errors : undefined,
+      errors: errors,
       message: 'Intake submitted successfully to HIPAA-secure server.',
     });
   } catch (error) {
     console.error('[Booking] Fatal error:', error);
-    return res.status(500).json({ error: 'Failed to submit intake. Please contact us directly.' });
+    return res.status(500).json({ error: 'Failed to submit intake. Please contact us directly.', version: CODE_VERSION });
   }
 }
